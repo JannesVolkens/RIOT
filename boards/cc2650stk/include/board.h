@@ -62,6 +62,11 @@ extern "C" {
 /** @} */
 
 /**
+ * @brief    TMP007 Infrared Thermopile Sensor
+ */
+#define TMP00X_PARAM_ADDR           (0x44)
+
+/**
  * @brief   Initialize board specific hardware, including clock, LEDs, and std-IO
  */
 void board_init(void);
