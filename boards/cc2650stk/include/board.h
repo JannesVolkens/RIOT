@@ -79,7 +79,7 @@ extern "C" {
 /**
  * @brief    BMP280 Temperature/Pressure Sensor
  */
-#define BMX280_PARAM_I2C_ADDR      (0x77)
+#define BMX280_PARAM_I2C_ADDR       (0x77)
 
 /**
  * @brief   Initialize board specific hardware, including clock, LEDs, and std-IO
