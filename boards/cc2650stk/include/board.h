@@ -69,7 +69,7 @@ extern "C" {
 /**
  * @brief    OPT3001 Ambient Light Sensor
  */
-#define TMP00X_PARAM_I2C_ADDR       (0x45)
+#define OPT3001_PARAM_I2C_ADDR      (0x45)
 
 /**
  * @brief   Initialize board specific hardware, including clock, LEDs, and std-IO
