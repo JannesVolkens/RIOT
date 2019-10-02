@@ -62,6 +62,11 @@ extern "C" {
 /** @} */
 
 /**
+ * @brief    HDC1000 Humidity and Temperature Sensor
+ */
+#define HDC1000_PARAM_ADDR          (0x43)
+
+/**
  * @brief    TMP007 Infrared Thermopile Sensor
  */
 #define TMP00X_PARAM_ADDR           (0x44)
@@ -70,6 +75,11 @@ extern "C" {
  * @brief    OPT3001 Ambient Light Sensor
  */
 #define OPT3001_PARAM_I2C_ADDR      (0x45)
+
+/**
+ * @brief    BMP280 Temperature/Pressure Sensor
+ */
+#define BMX280_PARAM_I2C_ADDR      (0x77)
 
 /**
  * @brief   Initialize board specific hardware, including clock, LEDs, and std-IO
