@@ -63,7 +63,7 @@ int tmp00x_init(tmp00x_t *dev, const tmp00x_params_t *params)
         return -TMP00X_ERROR_BUS;
     }
 
-    reg = htons(reg);
+    reg = htons(reg) & 0xFF;
     if (reg != TMP00X_DID_VALUE) {
         return -TMP00X_ERROR_DEV;
     }
