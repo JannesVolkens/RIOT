@@ -77,11 +77,6 @@ extern "C" {
 #define OPT3001_PARAM_I2C_ADDR      (0x45)
 
 /**
- * @brief    MPU-9250 9-Axis Motion Sensor
- */
-#define MPU9150_PARAM_ADDR          (0x68)
-
-/**
  * @brief    BMP280 Temperature/Pressure Sensor
  */
 #define BMX280_PARAM_I2C_ADDR       (0x77)
