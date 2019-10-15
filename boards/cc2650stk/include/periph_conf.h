@@ -83,8 +83,8 @@ static const timer_conf_t timer_config[] = {
  * @{
  */
 #define I2C_NUMOF           (1)
-#define I2C_SDA_PIN         (5)
-#define I2C_SCL_PIN         (6)
+#define I2C_SDA_PIN         (8)
+#define I2C_SCL_PIN         (9)
 /** @} */
 
 #ifdef __cplusplus
