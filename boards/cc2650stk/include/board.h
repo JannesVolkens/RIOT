@@ -77,6 +77,11 @@ extern "C" {
 #define OPT3001_PARAM_I2C_ADDR      (0x45)
 
 /**
+ * @brief    OPT3001 Ambient Light Sensor
+ */
+#define MPU9X50_PARAM_ADDR          (0x68)
+
+/**
  * @brief    BMP280 Temperature/Pressure Sensor
  */
 #define BMX280_PARAM_I2C_ADDR       (0x77)
