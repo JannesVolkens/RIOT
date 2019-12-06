@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = default
+APPLICATION = IPToCan
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -7,63 +7,63 @@ BOARD ?= native
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
 
-# Uncomment these lines if you want to use platform support from external
-# repositories:
-#RIOTCPU ?= $(CURDIR)/../../RIOT/thirdparty_cpu
-#RIOTBOARD ?= $(CURDIR)/../../RIOT/thirdparty_boards
+# Include packages that pull up and auto-init the link layer.
+# NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
+USEMODULE += gnrc_netdev_default
+USEMODULE += auto_init_gnrc_netif
+# Activate ICMPv6 error messages
+USEMODULE += gnrc_icmpv6_error
+# Specify the mandatory networking modules for IPv6 and UDP
+USEMODULE += gnrc_ipv6_router_default
+USEMODULE += gnrc_udp
+# Add a routing protocol
+USEMODULE += gnrc_rpl
+USEMODULE += auto_init_gnrc_rpl
+# This application dumps received packets to STDIO using the pktdump module
+USEMODULE += gnrc_pktdump
+# Additional networking modules that can be dropped if not needed
+USEMODULE += gnrc_icmpv6_echo
+# Add also the shell, some shell commands
+USEMODULE += shell
+USEMODULE += shell_commands
+USEMODULE += ps
+USEMODULE += netstats_l2
+USEMODULE += netstats_ipv6
+USEMODULE += netstats_rpl
 
-# Uncomment this to enable scheduler statistics for ps:
-#USEMODULE += schedstatistics
+# CAN
+USEMODULE += conn_can
+USEMODULE += can_isotp
+USEMODULE += conn_can_isotp_multi
+USEMODULE += can_pm
+USEMODULE += can_trx
 
-# If you want to use native with valgrind, you should recompile native
-# with the target all-valgrind instead of all:
-# make -B clean all-valgrind
+FEATURES_REQUIRED += periph_can
+FEATURES_REQUIRED += periph_gpio_irq
+
+TRX_TO_BUILD ?= ncv7356
+
+CFLAGS += -DGNRC_PKTBUF_SIZE=4096
+CFLAGS += -DCAN_PKT_BUF_SIZE=64
+CFLAGS += -DCAN_ROUTER_MAX_FILTER=32
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
 DEVELHELP ?= 1
 
+# Uncomment the following 2 lines to specify static link lokal IPv6 address
+# this might be useful for testing, in cases where you cannot or do not want to
+# run a shell with ifconfig to get the real link lokal address.
+#IPV6_STATIC_LLADDR ?= '"fe80::cafe:cafe:cafe:1"'
+#CFLAGS += -DGNRC_IPV6_STATIC_LLADDR=$(IPV6_STATIC_LLADDR)
+
+# Uncomment this to join RPL DODAGs even if DIOs do not contain
+# DODAG Configuration Options (see the doc for more info)
+# CFLAGS += -DGNRC_RPL_DODAG_CONF_OPTIONAL_ON_JOIN
+
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
-
-# Modules to include:
-USEMODULE += shell
-USEMODULE += shell_commands
-USEMODULE += ps
-# include and auto-initialize all available sensors
-USEMODULE += saul_default
-
-BOARD_PROVIDES_NETIF := acd52832 airfy-beacon atmega256rfr2-xpro avr-rss2 b-l072z-lrwan1 cc2538dk fox \
-        derfmega128 derfmega256 hamilton iotlab-m3 iotlab-a8-m3 lobaro-lorabox lsn50 mulle microbit msba2 \
-        microduino-corerf native nrf51dk nrf51dongle nrf52dk nrf52840dk nrf52840-mdk nrf6310 \
-        nucleo-f207zg nucleo-f767zi openmote-b openmote-cc2538 pba-d-01-kw2x remote-pa \
-        remote-reva ruuvitag samr21-xpro samr30-xpro spark-core telosb thingy52 yunjia-nrf51822 z1
-
-ifneq (,$(filter $(BOARD),$(BOARD_PROVIDES_NETIF)))
-  # Use modules for networking
-  # gnrc is a meta module including all required, basic gnrc networking modules
-  USEMODULE += gnrc
-  # use the default network interface for the board
-  USEMODULE += gnrc_netdev_default
-  # automatically initialize the network interface
-  USEMODULE += auto_init_gnrc_netif
-  # shell command to send L2 packets with a simple string
-  USEMODULE += gnrc_txtsnd
-  # the application dumps received packets to stdout
-  USEMODULE += gnrc_pktdump
-
-  # We use only the lower layers of the GNRC network stack, hence, we can
-  # reduce the size of the packet buffer a bit
-  CFLAGS += -DGNRC_PKTBUF_SIZE=512
-endif
-
-FEATURES_OPTIONAL += periph_rtc
-
-ifneq (,$(filter msba2,$(BOARD)))
-  USEMODULE += mci
-  USEMODULE += random
-endif
 
 include $(RIOTBASE)/Makefile.include
 
