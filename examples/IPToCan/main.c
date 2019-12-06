@@ -34,6 +34,13 @@
 #include "can/conn/isotp.h"
 #include "can/device.h"
 
+#include "net/gnrc.h"
+#include "net/gnrc/ipv6.h"
+#include "net/gnrc/netif.h"
+#include "net/gnrc/netif/hdr.h"
+#include "net/gnrc/udp.h"
+#include "net/gnrc/pktdump.h"
+
 #define MAIN_QUEUE_SIZE     (8)
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
@@ -41,6 +48,8 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 #define RECEIVE_THREAD_MSG_QUEUE_SIZE   (8)
 
 #include "timex.h"
+#include "utlist.h"
+#include "xtimer.h"
 #define TEST_CONN_CAN_RECV_TIMEOUT (30 * US_PER_SEC)
 
 #define RCV_THREAD_NUMOF (2)
@@ -257,6 +266,39 @@ static int can_handler(int argc, char **argv)
     return 1;
 }
 
+static void IPToCAN_send(char *addr_str, char *port_str, char *data, unsigned int num,
+                 unsigned int delay)
+{
+    printf("ADDR: %s\nPORT: %s\nDATA: %s\nNUM: %d\nDELAY: %d\n", addr_str,
+    port_str, data, num, delay);
+}
+static int ipToCan_handler(int argc, char **argv)
+{
+    if (argc < 2) {
+        printf("usage: %s [send]\n", argv[0]);
+        return 1;
+    }
+
+    if (strncmp(argv[1], "send", 5) == 0) {
+        uint32_t num = 1;
+        uint32_t delay = 1000000;
+        if (argc < 5) {
+          printf("usage: %s send <addr> <port> <data> [<num> [<delay in us>]]\n",
+                 argv[0]);
+          return 1;
+        }
+        if (argc > 5) {
+            num = atoi(argv[5]);
+        }
+        if (argc > 6) {
+            delay = atoi(argv[6]);
+        }
+        IPToCAN_send(argv[2], argv[3], argv[4], num, delay);
+    }
+
+    return 1;
+}
+
 static void *_receive_thread(void *args)
 {
     int thread_nb = (int)args;
@@ -329,6 +371,7 @@ static void *_receive_thread(void *args)
 static const shell_command_t shell_commands[] = {
     { "udp", "send data over UDP and listen on UDP ports", udp_cmd },
     { "test_can", "Test CAN functions", can_handler},
+    { "IP_to_CAN", "IP to CAN functions", ipToCan_handler},
     { NULL, NULL, NULL }
 };
 
