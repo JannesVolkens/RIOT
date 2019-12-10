@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = IPToCan
+APPLICATION = gnrc_networking
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -30,22 +30,7 @@ USEMODULE += ps
 USEMODULE += netstats_l2
 USEMODULE += netstats_ipv6
 USEMODULE += netstats_rpl
-
-# CAN
-USEMODULE += conn_can
-USEMODULE += can_isotp
-USEMODULE += conn_can_isotp_multi
-USEMODULE += can_pm
-USEMODULE += can_trx
-
-FEATURES_REQUIRED += periph_can
-FEATURES_REQUIRED += periph_gpio_irq
-
-TRX_TO_BUILD ?= ncv7356
-
-CFLAGS += -DGNRC_PKTBUF_SIZE=4096
-CFLAGS += -DCAN_PKT_BUF_SIZE=64
-CFLAGS += -DCAN_ROUTER_MAX_FILTER=32
+USEMODULE += gnrc_sock_udp
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the

@@ -32,6 +32,15 @@
 #include "utlist.h"
 #include "xtimer.h"
 
+#define SERVER_MSG_QUEUE_SIZE   (8U)
+#define SERVER_PRIO             (THREAD_PRIORITY_MAIN - 1)
+#define SERVER_STACKSIZE        (THREAD_STACKSIZE_MAIN)
+#define SERVER_RESET            (0x8fae)
+
+static char server_stack[SERVER_STACKSIZE];
+static msg_t server_queue[SERVER_MSG_QUEUE_SIZE];
+static kernel_pid_t server_pid = KERNEL_PID_UNDEF;
+
 static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL,
                                                                KERNEL_PID_UNDEF);
 
@@ -43,8 +52,6 @@ static void send(char *addr_str, char *port_str, char *data, unsigned int num,
     char *iface;
     uint16_t port;
     ipv6_addr_t addr;
-
-    printf("ADDR: %s\nPORT: %s\nDATA: %s\n", addr_str, port_str, data);
 
     iface = ipv6_addr_split_iface(addr_str);
     if ((!iface) && (gnrc_netif_numof() == 1)) {
@@ -112,6 +119,46 @@ static void send(char *addr_str, char *port_str, char *data, unsigned int num,
     }
 }
 
+static void *_eventloop(void *arg)
+{
+    (void)arg;
+    msg_t msg, reply;
+    unsigned int rcv_count = 0;
+
+    /* setup the message queue */
+    msg_init_queue(server_queue, SERVER_MSG_QUEUE_SIZE);
+
+    reply.content.value = (uint32_t)(-ENOTSUP);
+    reply.type = GNRC_NETAPI_MSG_TYPE_ACK;
+
+    while (1) {
+        msg_receive(&msg);
+
+        switch (msg.type) {
+            case GNRC_NETAPI_MSG_TYPE_RCV:
+                printf("Packets received: %u\nSENDER_PID: %d\nTYPE: %d\nVALUE: %d\n",
+                ++rcv_count,
+                msg.sender_pid,
+                msg.type,
+                msg.content.value);
+                gnrc_pktbuf_release(msg.content.ptr);
+                break;
+            case GNRC_NETAPI_MSG_TYPE_GET:
+            case GNRC_NETAPI_MSG_TYPE_SET:
+                msg_reply(&msg, &reply);
+                break;
+            case SERVER_RESET:
+                rcv_count = 0;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /* never reached */
+    return NULL;
+}
+
 static void start_server(char *port_str)
 {
     uint16_t port;
@@ -129,8 +176,22 @@ static void start_server(char *port_str)
         return;
     }
     /* start server (which means registering pktdump for the chosen port) */
-    server.target.pid = gnrc_pktdump_pid;
-    server.demux_ctx = (uint32_t)port;
+    // server.target.pid = gnrc_pktdump_pid;
+    // server.demux_ctx = (uint32_t)port;
+    // gnrc_netreg_register(GNRC_NETTYPE_UDP, &server);
+    // printf("Success: started UDP server on port %" PRIu16 "\n", port);
+
+    if (server_pid <= KERNEL_PID_UNDEF) {
+        /* start server */
+        server_pid = thread_create(server_stack, sizeof(server_stack), SERVER_PRIO,
+                                   THREAD_CREATE_STACKTEST, _eventloop, NULL, "UDP server");
+        if (server_pid <= KERNEL_PID_UNDEF) {
+            puts("Error: can not start server thread");
+            return;
+        }
+    }
+    /* register server to receive messages from given port */
+    gnrc_netreg_entry_init_pid(&server, port, server_pid);
     gnrc_netreg_register(GNRC_NETTYPE_UDP, &server);
     printf("Success: started UDP server on port %" PRIu16 "\n", port);
 }
