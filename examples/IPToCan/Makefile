@@ -32,6 +32,15 @@ USEMODULE += netstats_ipv6
 USEMODULE += netstats_rpl
 USEMODULE += gnrc_sock_udp
 
+# USEMODULE += conn_can
+# USEMODULE += can_isotp
+# USEMODULE += conn_can_isotp_multi
+# USEMODULE += can_pm
+# USEMODULE += can_trx
+#
+# FEATURES_REQUIRED += periph_can
+# FEATURES_REQUIRED += periph_gpio_irq
+
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:

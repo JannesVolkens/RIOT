@@ -31,6 +31,7 @@
 #include "timex.h"
 #include "utlist.h"
 #include "xtimer.h"
+#include "od.h"
 
 #define SERVER_MSG_QUEUE_SIZE   (8U)
 #define SERVER_PRIO             (THREAD_PRIORITY_MAIN - 1)
@@ -40,6 +41,8 @@
 static char server_stack[SERVER_STACKSIZE];
 static msg_t server_queue[SERVER_MSG_QUEUE_SIZE];
 static kernel_pid_t server_pid = KERNEL_PID_UNDEF;
+
+extern void udp_to_can(kernel_pid_t sender_pid, uint16_t type, void *ptr, uint32_t value);
 
 static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL,
                                                                KERNEL_PID_UNDEF);
@@ -119,6 +122,116 @@ static void send(char *addr_str, char *port_str, char *data, unsigned int num,
     }
 }
 
+static void _dump_snip(gnrc_pktsnip_t *pkt)
+{
+    size_t hdr_len = pkt->size;
+
+    switch (pkt->type) {
+        case GNRC_NETTYPE_UNDEF:
+            printf("NETTYPE_UNDEF (%i)\n", pkt->type);
+            od_hex_dump(pkt->data, pkt->size, OD_WIDTH_DEFAULT);
+            break;
+#ifdef MODULE_GNRC_NETIF
+        case GNRC_NETTYPE_NETIF:
+            printf("NETTYPE_NETIF (%i)\n", pkt->type);
+            gnrc_netif_hdr_print(pkt->data);
+            break;
+#endif
+#ifdef MODULE_GNRC_SIXLOWPAN
+        case GNRC_NETTYPE_SIXLOWPAN:
+            printf("NETTYPE_SIXLOWPAN (%i)\n", pkt->type);
+            sixlowpan_print(pkt->data, pkt->size);
+            break;
+#endif
+#ifdef MODULE_GNRC_IPV6
+        case GNRC_NETTYPE_IPV6:
+            printf("NETTYPE_IPV6 (%i)\n", pkt->type);
+            ipv6_hdr_print(pkt->data);
+            hdr_len = sizeof(ipv6_hdr_t);
+            break;
+#endif
+#ifdef MODULE_GNRC_IPV6_EXT
+        case GNRC_NETTYPE_IPV6_EXT:
+            printf("NETTYPE_IPV6_EXT (%i)\n", pkt->type);
+            od_hex_dump(pkt->data, pkt->size, OD_WIDTH_DEFAULT);
+            break;
+#endif
+#ifdef MODULE_GNRC_ICMPV6
+        case GNRC_NETTYPE_ICMPV6:
+            printf("NETTYPE_ICMPV6 (%i)\n", pkt->type);
+            icmpv6_hdr_print(pkt->data);
+            hdr_len = sizeof(icmpv6_hdr_t);
+            break;
+#endif
+#ifdef MODULE_GNRC_TCP
+        case GNRC_NETTYPE_TCP:
+            printf("NETTYPE_TCP (%i)\n", pkt->type);
+            tcp_hdr_print(pkt->data);
+            hdr_len = sizeof(tcp_hdr_t);
+            break;
+#endif
+#ifdef MODULE_GNRC_UDP
+        case GNRC_NETTYPE_UDP:
+            printf("NETTYPE_UDP (%i)\n", pkt->type);
+            udp_hdr_print(pkt->data);
+            hdr_len = sizeof(udp_hdr_t);
+            break;
+#endif
+#ifdef MODULE_CCN_LITE_UTILS
+        case GNRC_NETTYPE_CCN_CHUNK:
+            printf("GNRC_NETTYPE_CCN_CHUNK (%i)\n", pkt->type);
+            printf("Content is: %.*s\n", (int)pkt->size, (char*)pkt->data);
+            break;
+#endif
+#ifdef MODULE_NDN_RIOT
+    case GNRC_NETTYPE_NDN:
+            printf("NETTYPE_NDN (%i)\n", pkt->type);
+            od_hex_dump(pkt->data, pkt->size, OD_WIDTH_DEFAULT);
+        break;
+#endif
+#ifdef MODULE_GNRC_LORAWAN
+    case GNRC_NETTYPE_LORAWAN:
+            printf("NETTYPE_LORAWAN (%i)\n", pkt->type);
+            od_hex_dump(pkt->data, pkt->size, OD_WIDTH_DEFAULT);
+        break;
+#endif
+#ifdef TEST_SUITES
+        case GNRC_NETTYPE_TEST:
+            printf("NETTYPE_TEST (%i)\n", pkt->type);
+            od_hex_dump(pkt->data, pkt->size, OD_WIDTH_DEFAULT);
+            break;
+#endif
+        default:
+            printf("NETTYPE_UNKNOWN (%i)\n", pkt->type);
+            od_hex_dump(pkt->data, pkt->size, OD_WIDTH_DEFAULT);
+            break;
+    }
+    if (hdr_len < pkt->size) {
+        size_t size = pkt->size - hdr_len;
+
+        od_hex_dump(((uint8_t *)pkt->data) + hdr_len, size, OD_WIDTH_DEFAULT);
+    }
+}
+
+static void _dump(gnrc_pktsnip_t *pkt)
+{
+    int snips = 0;
+    int size = 0;
+    gnrc_pktsnip_t *snip = pkt;
+
+    while (snip != NULL) {
+        printf("~~ SNIP %2i - size: %3u byte, type: ", snips,
+               (unsigned int)snip->size);
+        _dump_snip(snip);
+        ++snips;
+        size += snip->size;
+        snip = snip->next;
+    }
+
+    printf("~~ PKT    - %2i snips, total size: %3i byte\n", snips, size);
+    gnrc_pktbuf_release(pkt);
+}
+
 static void *_eventloop(void *arg)
 {
     (void)arg;
@@ -136,12 +249,10 @@ static void *_eventloop(void *arg)
 
         switch (msg.type) {
             case GNRC_NETAPI_MSG_TYPE_RCV:
-                printf("Packets received: %u\nSENDER_PID: %d\nTYPE: %d\nVALUE: %d\n",
-                ++rcv_count,
-                msg.sender_pid,
-                msg.type,
-                msg.content.value);
+                printf("Packets received: %u\n", ++rcv_count);
+                udp_to_can(msg.sender_pid, msg.type, msg.content.ptr, msg.content.value);
                 gnrc_pktbuf_release(msg.content.ptr);
+                //_dump(msg.content.ptr);
                 break;
             case GNRC_NETAPI_MSG_TYPE_GET:
             case GNRC_NETAPI_MSG_TYPE_SET:
@@ -149,6 +260,7 @@ static void *_eventloop(void *arg)
                 break;
             case SERVER_RESET:
                 rcv_count = 0;
+                _dump(msg.content.ptr);
                 break;
             default:
                 break;
