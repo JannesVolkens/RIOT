@@ -82,6 +82,25 @@ static void print_usage(void)
     puts("test_can power_down ifnum");
 }
 
+int can_send(void)
+{
+  struct can_frame frame;
+
+  frame.can_id = 1;
+  frame.can_dlc = 8;
+  for (int i = 0; i < frame.can_dlc; i++) {
+      frame.data[i] = i;
+  }
+  conn_can_raw_t conn;
+  conn_can_raw_create(&conn, NULL, 0, 0, 0);
+  int ret = conn_can_raw_send(&conn, &frame, 0);
+  if (ret < 0) {
+      puts("Error when trying to send");
+  }
+  puts("Send CAN msg");
+  return 0;
+}
+
 static int _list(int argc, char **argv) {
 
     (void)argc;
