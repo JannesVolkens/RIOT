@@ -41,6 +41,8 @@ USEMODULE += can_trx
 FEATURES_REQUIRED += periph_can
 FEATURES_REQUIRED += periph_gpio_irq
 
+USEMODULE += ncv7356
+
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:

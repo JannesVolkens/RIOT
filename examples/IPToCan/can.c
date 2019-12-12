@@ -32,6 +32,15 @@
 #include "can/conn/isotp.h"
 #include "can/device.h"
 
+#include "can/can_trx.h"
+#include "ncv7356.h"
+#include "ncv7356_params.h"
+
+static can_trx_t *devs[] = {
+    (can_trx_t*) &ncv7356_params[0],
+    NULL,
+};
+
 #define THREAD_STACKSIZE   (THREAD_STACKSIZE_MAIN)
 #define RECEIVE_THREAD_MSG_QUEUE_SIZE   (8)
 
@@ -555,6 +564,76 @@ int _can_handler(int argc, char **argv)
     }
     else if (strncmp(argv[1], "power_down", 11) == 0) {
         return _power_down(argc, argv);
+    }
+    else {
+        printf("unknown command: %s\n", argv[1]);
+        return 1;
+    }
+    return 0;
+}
+
+static int init(int argc, char **argv) {
+
+    if (argc < 3) {
+        puts("trx_id needed");
+        return 1;
+    }
+
+    unsigned trx = atoi(argv[1]);
+    if (trx < ARRAY_SIZE(devs)) {
+        int res = can_trx_init(devs[trx]);
+        if (res >= 0) {
+            puts("Trx successfully initialized");
+            return 0;
+        }
+        else {
+            printf("Error when initializing trx: %d\n", res);
+        }
+    }
+    else {
+        puts("Invalid trx_id");
+    }
+
+    return 1;
+}
+
+static int set_mode(int argc, char **argv) {
+
+    if (argc < 4) {
+        puts("trx_id and mode needed");
+        return 1;
+    }
+    unsigned trx = atoi(argv[1]);
+    unsigned mode = atoi(argv[2]);
+    if ((trx < ARRAY_SIZE(devs)) &&
+            (mode <= TRX_HIGH_VOLTAGE_WAKE_UP_MODE)) {
+        int res = can_trx_set_mode(devs[trx], mode);
+        if (res >= 0) {
+            puts("Mode successfully set");
+            return 0;
+        }
+        else {
+            printf("Error when setting mode: %d\n", res);
+        }
+    }
+    else {
+        puts("Invalid trx_id or mode");
+    }
+
+    return 1;
+}
+
+int _can_trx_handler(int argc, char **argv)
+{
+    if (argc < 2) {
+        printf("can_trx [init/mode]\n");
+        return 1;
+    }
+    else if (strncmp(argv[1], "init", 5) == 0) {
+        return init(argc, argv);
+    }
+    else if (strncmp(argv[1], "mode", 5) == 0) {
+        return set_mode(argc, argv);
     }
     else {
         printf("unknown command: %s\n", argv[1]);
