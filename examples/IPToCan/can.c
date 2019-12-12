@@ -62,6 +62,8 @@ static kernel_pid_t receive_pid[RCV_THREAD_NUMOF];
 static conn_can_raw_t conn[RCV_THREAD_NUMOF];
 static struct can_filter filters[RCV_THREAD_NUMOF][MAX_FILTER];
 
+static char thread_stack[RCV_THREAD_NUMOF][THREAD_STACKSIZE];
+
 #ifdef MODULE_CAN_ISOTP
 #define ISOTP_BUF_SIZE 1024
 //static uint8_t isotp_buf[RCV_THREAD_NUMOF][ISOTP_BUF_SIZE];
@@ -572,6 +574,47 @@ int _can_handler(int argc, char **argv)
     return 0;
 }
 
+static void *_receive_thread(void *args)
+{
+    int thread_nb = (int)args;
+    struct can_frame frame;
+    msg_t msg, msg_queue[RECEIVE_THREAD_MSG_QUEUE_SIZE];
+
+    /* setup the device layers message queue */
+    msg_init_queue(msg_queue, RECEIVE_THREAD_MSG_QUEUE_SIZE);
+
+    printf("%d: launching receive_thread\n", thread_nb);
+
+    while (1) {
+        msg_receive(&msg);
+        switch (msg.type) {
+        case CAN_MSG_RECV:
+        {
+            int ret;
+            while ((ret = conn_can_raw_recv(&conn[thread_nb], &frame, msg.content.value))
+                   == sizeof(struct can_frame)) {
+                printf("%d: %-8s %" PRIx32 "  [%x] ",
+                       thread_nb, raw_can_get_name_by_ifnum(conn[thread_nb].ifnum),
+                       frame.can_id, frame.can_dlc);
+                for (int i = 0; i < frame.can_dlc; i++) {
+                    printf(" %02X", frame.data[i]);
+                }
+                printf("\n");
+            }
+            printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
+            conn_can_raw_close(&conn[thread_nb]);
+            thread_busy[thread_nb] = 0;
+            break;
+        }
+        default:
+            printf("%d: _receive_thread: received unknown message\n", thread_nb);
+            break;
+        }
+    }
+
+    return NULL;
+}
+
 static int init(int argc, char **argv) {
 
     if (argc < 3) {
@@ -584,17 +627,26 @@ static int init(int argc, char **argv) {
         int res = can_trx_init(devs[trx]);
         if (res >= 0) {
             puts("Trx successfully initialized");
-            return 0;
+            //return 0;
         }
         else {
             printf("Error when initializing trx: %d\n", res);
+            return 1;
         }
     }
     else {
         puts("Invalid trx_id");
+        return 1;
     }
 
-    return 1;
+    for (int i = 0; i < RCV_THREAD_NUMOF; i++) {
+        receive_pid[i] = thread_create(thread_stack[i], THREAD_STACKSIZE,
+                                       THREAD_PRIORITY_MAIN - 1,
+                                       THREAD_CREATE_STACKTEST, _receive_thread,
+                                       (void*)i, "receive_thread");
+    }
+
+    return 0;
 }
 
 static int set_mode(int argc, char **argv) {
