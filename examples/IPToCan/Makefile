@@ -38,6 +38,8 @@ USEMODULE += conn_can_isotp_multi
 USEMODULE += can_pm
 USEMODULE += can_trx
 
+USEMODULE += gnrc_sock_udp
+
 FEATURES_REQUIRED += periph_can
 FEATURES_REQUIRED += periph_gpio_irq
 

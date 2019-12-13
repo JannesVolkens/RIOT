@@ -48,6 +48,16 @@ static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX
                                                                KERNEL_PID_UNDEF);
 
 
+int udp_send(uint32_t ID, uint8_t dlc, uint8_t *data)
+{
+
+    printf("ID: %" PRIx32 "\nDLC: %x\n", ID, dlc);
+    for (size_t i = 0; i < dlc; i++) {
+      printf("%x\n", data[i]);
+    }
+    return 0;
+}
+
 static void send(char *addr_str, char *port_str, char *data, unsigned int num,
                  unsigned int delay)
 {

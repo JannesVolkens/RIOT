@@ -73,6 +73,9 @@ static conn_can_isotp_t conn_isotp[RCV_THREAD_NUMOF];
 
 static int thread_busy[RCV_THREAD_NUMOF];
 
+extern void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data);
+extern void can_to_udp_sock(void);
+
 static void print_usage(void)
 {
     puts("test_can list");
@@ -600,6 +603,8 @@ static void *_receive_thread(void *args)
                     printf(" %02X", frame.data[i]);
                 }
                 printf("\n");
+                //can_to_udp(frame.can_id, frame.can_dlc, frame.data);
+                can_to_udp_sock();
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);

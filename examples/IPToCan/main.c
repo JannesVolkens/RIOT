@@ -29,8 +29,11 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 extern int udp_cmd(int argc, char **argv);
 extern int _can_handler(int argc, char **argv);
 extern int _can_trx_handler(int argc, char **argv);
+extern int udp_sock_cmd(int argc, char **argv);
+extern int _send(uint16_t port);
 
 extern int can_send(void);
+extern int udp_send(uint32_t ID, uint8_t dlc, uint8_t *data);
 
 void udp_to_can(kernel_pid_t sender_pid, uint16_t type, void *ptr, uint32_t value)
 {
@@ -39,10 +42,22 @@ void udp_to_can(kernel_pid_t sender_pid, uint16_t type, void *ptr, uint32_t valu
     can_send();
 }
 
+void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data)
+{
+    udp_send(ID, dlc, data);
+}
+
+void can_to_udp_sock(void)
+{
+    uint16_t port = 8808;
+    _send(port);
+}
+
 static const shell_command_t shell_commands[] = {
     { "udp", "send data over UDP and listen on UDP ports", udp_cmd },
     { "test_can", "CAN test functions", _can_handler},
     { "can_trx", "can_trx functions", _can_trx_handler},
+    { "udp_sock", "socket functions", udp_sock_cmd},
     { NULL, NULL, NULL }
 };
 
