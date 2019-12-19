@@ -59,7 +59,7 @@ static int start_socket(uint16_t port)
     return 0;
 }
 
-void set_ID(uint8_t *buf, uint32_t id)
+static void set_ID(uint8_t *buf, uint32_t id)
 {
     buf[0] = (id & 0x000000ff);
     buf[1] = (id & 0x0000ff00) >> 8;
