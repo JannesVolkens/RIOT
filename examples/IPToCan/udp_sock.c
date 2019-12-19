@@ -59,6 +59,14 @@ static int start_socket(uint16_t port)
     return 0;
 }
 
+void set_ID(uint8_t *buf, uint32_t id)
+{
+    buf[0] = (id & 0x000000ff);
+    buf[1] = (id & 0x0000ff00) >> 8;
+    buf[2] = (id & 0x00ff0000) >> 16;
+    buf[3] = (id & 0xff000000) >> 24;
+}
+
 int _send(uint16_t port, uint32_t id, uint8_t dlc, uint8_t *data)
 {
     sock_udp_ep_t remote = { .family = AF_INET6 };
@@ -67,10 +75,7 @@ int _send(uint16_t port, uint32_t id, uint8_t dlc, uint8_t *data)
 
     uint8_t buf[BUFSIZE(dlc)];
 
-    buf[0] = (id & 0x000000ff);
-    buf[1] = (id & 0x0000ff00) >> 8;
-    buf[2] = (id & 0x00ff0000) >> 16;
-    buf[3] = (id & 0xff000000) >> 24;
+    set_ID(buf, id);
     buf[4] = dlc;
 
     int test = 5;
