@@ -74,8 +74,11 @@ static conn_can_isotp_t conn_isotp[RCV_THREAD_NUMOF];
 static int thread_busy[RCV_THREAD_NUMOF];
 
 extern void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data);
-extern void can_to_udp_sock(uint32_t id, uint8_t dlc, uint8_t *data);
-extern void can_to_someIP(const struct can_frame *frame);
+extern void can_to_udp_sock(uint8_t *data, int size);
+extern void can_to_someIP(const struct can_frame *frame, uint8_t *buf);
+
+#define MAXBUFSIZE 24
+uint8_t buf[MAXBUFSIZE];
 
 static void print_usage(void)
 {
@@ -95,25 +98,6 @@ static void print_usage(void)
     puts("test_can get_counter ifnum");
     puts("test_can power_up ifnum");
     puts("test_can power_down ifnum");
-}
-
-int can_send(void)
-{
-  struct can_frame frame;
-
-  frame.can_id = 1;
-  frame.can_dlc = 8;
-  for (int i = 0; i < frame.can_dlc; i++) {
-      frame.data[i] = i;
-  }
-  conn_can_raw_t conn;
-  conn_can_raw_create(&conn, NULL, 0, 0, 0);
-  int ret = conn_can_raw_send(&conn, &frame, 0);
-  if (ret < 0) {
-      puts("Error when trying to send");
-  }
-  puts("Send CAN msg");
-  return 0;
 }
 
 static int _list(int argc, char **argv) {
@@ -604,9 +588,9 @@ static void *_receive_thread(void *args)
                     printf(" %02X", frame.data[i]);
                 }
                 printf("\n");
-                //can_to_udp(frame.can_id, frame.can_dlc, frame.data);
-                //can_to_udp_sock(frame.can_id, frame.can_dlc, frame.data);
-                can_to_someIP(&frame);
+
+                can_to_someIP(&frame, buf);
+                can_to_udp_sock(buf, MAXBUFSIZE);
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);

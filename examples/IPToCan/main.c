@@ -29,12 +29,12 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 extern int _can_handler(int argc, char **argv);
 extern int _can_trx_handler(int argc, char **argv);
 extern int udp_sock_cmd(int argc, char **argv);
-extern int _send(uint16_t port, uint32_t id, uint8_t dlc, uint8_t *data);
+extern int _send(uint16_t port, uint8_t *data, int size);
 
-void can_to_udp_sock(uint32_t id, uint8_t dlc, uint8_t *data)
+void can_to_udp_sock(uint8_t *data, int size)
 {
     uint16_t port = 8808;
-    _send(port, id, dlc, data);
+    _send(port, data, size);
 }
 
 static const shell_command_t shell_commands[] = {

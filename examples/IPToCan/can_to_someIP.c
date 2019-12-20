@@ -41,11 +41,8 @@ static void fill_payload(uint8_t *buf, const uint8_t *data, uint8_t dlc)
     }
 }
 
-void can_to_someIP(const struct can_frame *frame)
+void can_to_someIP(const struct can_frame *frame, uint8_t *buf)
 {
-    uint8_t buf[BUFSIZE(get_length(frame->can_dlc))];
-    memset(buf, 0, sizeof(buf));
-
     set_ID(buf, frame->can_id);
     set_length(buf, get_length(frame->can_dlc));
     set_client_id(buf, 0xabcd);
@@ -56,8 +53,4 @@ void can_to_someIP(const struct can_frame *frame)
     buf[15] = 0x00;
 
     fill_payload(buf, frame->data, frame->can_dlc);
-
-    for (size_t i = 0; i < sizeof(buf); i++) {
-        printf("BUF[%d]: %x\n", i, buf[i]);
-    }
 }
