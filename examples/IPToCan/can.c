@@ -77,8 +77,8 @@ extern void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data);
 extern void can_to_udp_sock(uint8_t *data, int size);
 extern void can_to_someIP(const struct can_frame *frame, uint8_t *buf);
 
-#define MAXBUFSIZE 24
-uint8_t buf[MAXBUFSIZE];
+#define HEADER 16
+#define HEADERSIZE(size) (HEADER + size)
 
 static void print_usage(void)
 {
@@ -589,8 +589,15 @@ static void *_receive_thread(void *args)
                 }
                 printf("\n");
 
+                uint8_t buf[HEADERSIZE(frame.can_dlc)];
+
                 can_to_someIP(&frame, buf);
-                can_to_udp_sock(buf, MAXBUFSIZE);
+                puts("..____________________..");
+                for (size_t i = 0; i < sizeof(buf); i++) {
+                    printf("BUF[%d]: %x\n", i, buf[i]);
+                }
+
+                //can_to_udp_sock(buf, MAXBUFSIZE);
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);

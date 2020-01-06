@@ -14,24 +14,26 @@ static uint32_t get_length(uint8_t dlc)
 
 static void set_ID(uint8_t *buf, uint32_t id)
 {
-    buf[3] = (id & 0x000000ff);
-    buf[2] = (id & 0x0000ff00) >> 8;
-    buf[1] = (id & 0x00ff0000) >> 16;
     buf[0] = (id & 0xff000000) >> 24;
+    buf[1] = (id & 0x00ff0000) >> 16;
+    buf[2] = (id & 0x0000ff00) >> 8;
+    buf[3] = (id & 0x000000ff);
 }
 
 static void set_length(uint8_t *buf, uint32_t length)
 {
-    buf[7] = (length & 0x000000ff);
-    buf[6] = (length & 0x0000ff00) >> 8;
-    buf[5] = (length & 0x00ff0000) >> 16;
     buf[4] = (length & 0xff000000) >> 24;
+    buf[5] = (length & 0x00ff0000) >> 16;
+    buf[6] = (length & 0x0000ff00) >> 8;
+    buf[7] = (length & 0x000000ff);
 }
 
-static void set_client_id(uint8_t *buf, uint16_t id)
+static void set_client_id(uint8_t *buf, uint16_t clientID, uint16_t sessionID)
 {
-    buf[9] = (id & 0x00ff);
-    buf[8] = (id & 0xff00) >> 8;
+    buf[8] = (clientID & 0xff00) >> 8;
+    buf[9] = (clientID & 0x00ff);
+    buf[10] = (sessionID & 0xff00) >> 8;
+    buf[11] = (sessionID & 0x00ff);
 }
 
 static void fill_payload(uint8_t *buf, const uint8_t *data, uint8_t dlc)
@@ -45,7 +47,7 @@ void can_to_someIP(const struct can_frame *frame, uint8_t *buf)
 {
     set_ID(buf, frame->can_id);
     set_length(buf, get_length(frame->can_dlc));
-    set_client_id(buf, 0xabcd);
+    set_client_id(buf, 0xabcd, 0x0000);
     //Protoco, Interface, Message type, Return code
     buf[12] = 0x01;
     buf[13] = 0x00;
