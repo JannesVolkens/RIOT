@@ -592,12 +592,8 @@ static void *_receive_thread(void *args)
                 uint8_t buf[HEADERSIZE(frame.can_dlc)];
 
                 can_to_someIP(&frame, buf);
-                puts("..____________________..");
-                for (size_t i = 0; i < sizeof(buf); i++) {
-                    printf("BUF[%d]: %x\n", i, buf[i]);
-                }
 
-                //can_to_udp_sock(buf, MAXBUFSIZE);
+                can_to_udp_sock(buf, HEADERSIZE(frame.can_dlc));
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);

@@ -6,24 +6,28 @@
 #define BUFSIZE(size) (5 + size)
 
 sock_udp_t sock;
+uint16_t port = 0;
 
 char rcv_thread_stack[THREAD_STACKSIZE_MAIN];
+
+extern void someIP_to_can(uint8_t *buf, int size);
 
 static void *_receive(void *arg)
 {
     (void)arg;
     uint8_t buf[24];
 
+    //uint32_t length;
+
     while (1) {
         sock_udp_ep_t remote;
 
         if (sock_udp_recv(&sock, buf, sizeof(buf), SOCK_NO_TIMEOUT, &remote) >= 0) {
             puts("received MSG");
-
-            for (size_t i = 0; i < sizeof(buf); i++) {
-                printf("BUF[%d]: %x\n", i, buf[i]);
-            }
         }
+        //length = buf[7] | buf[6] << 8 | buf[5] << 16 | buf[4] << 24;
+
+        //someIP_to_can(buf, 8 + length);
     }
 
     return NULL;
@@ -48,7 +52,7 @@ static int start_socket(uint16_t port)
     return 0;
 }
 
-int _send(uint16_t port, uint8_t *data, int size)
+int _send(uint8_t *data, int size)
 {
     sock_udp_ep_t remote = { .family = AF_INET6 };
     remote.port = port;
@@ -68,6 +72,66 @@ int _send(uint16_t port, uint8_t *data, int size)
     return 0;
 }
 
+int send(void)
+{
+    sock_udp_ep_t remote = { .family = AF_INET6 };
+    remote.port = 8808;
+    remote.addr.ipv6[0] = 1;
+
+    uint8_t data[24];
+
+    //MSGID
+    data[0] = 0x00;
+    data[1] = 0x00;
+    data[2] = 0x03;
+    data[3] = 0xfc;
+
+    //LENGTH
+    data[4] = 0x00;
+    data[5] = 0x00;
+    data[6] = 0x00;
+    data[7] = 0x0E;
+
+    //REQUEST
+    data[8] = 0xab;
+    data[9] = 0xcd;
+    data[10] = 0x00;
+    data[11] = 0x00;
+
+    //Protocol/Interface/MSGType/Return
+    data[12] = 0x01;
+    data[13] = 0x00;
+    data[14] = 0x01;
+    data[15] = 0x00;
+
+    //PAYLOAD
+    data[16] = 0x01;
+    data[17] = 0x00;
+    data[18] = 0xFF;
+    data[19] = 0xA1;
+    data[20] = 0x10;
+    data[21] = 0xFB;
+
+    ipv6_addr_set_all_nodes_multicast((ipv6_addr_t *)&remote.addr.ipv6,
+                                  IPV6_ADDR_MCAST_SCP_LINK_LOCAL);
+
+    if (sock_udp_send(&sock, data, sizeof(data), &remote) < 0) {
+        puts("Error sending message");
+        sock_udp_close(&sock);
+        return 1;
+    }
+
+    puts("Send msg");
+
+    return 0;
+}
+
+void set_port(uint16_t new_port)
+{
+    port = new_port;
+    printf("Port is: %d", port);
+}
+
 int udp_sock_cmd(int argc, char **argv)
 {
     if (argc < 2) {
@@ -81,7 +145,13 @@ int udp_sock_cmd(int argc, char **argv)
           }
           start_socket(atoi(argv[2]));
     } else if (strcmp(argv[1], "send") == 0) {
-          //_send(atoi(argv[2]));
+          send();
+    } else if (strcmp(argv[1], "port") == 0) {
+          if (argc < 3) {
+              puts("udp_sock port [port]");
+              return 1;
+          }
+          set_port(atoi(argv[2]));
     }
 
     return 0;
