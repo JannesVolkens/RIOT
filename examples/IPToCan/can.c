@@ -29,7 +29,6 @@
 
 #include "can/can.h"
 #include "can/conn/raw.h"
-#include "can/conn/isotp.h"
 #include "can/device.h"
 
 #include "can/can_trx.h"
@@ -64,13 +63,6 @@ static struct can_filter filters[RCV_THREAD_NUMOF][MAX_FILTER];
 
 static char thread_stack[RCV_THREAD_NUMOF][THREAD_STACKSIZE];
 
-#ifdef MODULE_CAN_ISOTP
-#define ISOTP_BUF_SIZE 1024
-//static uint8_t isotp_buf[RCV_THREAD_NUMOF][ISOTP_BUF_SIZE];
-
-static conn_can_isotp_t conn_isotp[RCV_THREAD_NUMOF];
-#endif
-
 static int thread_busy[RCV_THREAD_NUMOF];
 
 extern void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data);
@@ -86,12 +78,6 @@ static void print_usage(void)
     puts("test_can send ifnum can_id [B1 [B2 [B3 [B4 [B5 [B6 [B7 [B8]]]]]]]]");
     printf("test_can recv ifnum user_id timeout can_id1 [can_id2..can_id%d]\n", MAX_FILTER);
     puts("test_can close user_id");
-#ifdef MODULE_CAN_ISOTP
-    puts("test_can bind_isotp ifnum user_id source_id dest_id");
-    puts("test_can send_isotp user_id [B1 [.. [ Bn ]]]");
-    puts("test_can recv_isotp user_id timeout");
-    puts("test_can close_isotp user_id");
-#endif
     puts("test_can get_filter ifnum");
     puts("test_can set_bitrate ifnum bitrate [sample_point]");
     puts("test_can get_bitrate ifnum");
@@ -210,119 +196,6 @@ static int _close(int argc, char **argv)
     thread_busy[thread_nb] = 0;
     return 0;
 }
-
-#ifdef MODULE_CAN_ISOTP
-static int _bind_isotp(int argc, char **argv)
-{
-    if (argc < 4) {
-        print_usage();
-        return 1;
-    }
-    int ret;
-    int ifnum = strtol(argv[2], NULL, 0);
-    if (ifnum >= CAN_DLL_NUMOF) {
-        puts("Invalid interface number");
-        return 1;
-    }
-
-    int thread_nb = strtol(argv[3], NULL, 0);
-    if (thread_nb >= RCV_THREAD_NUMOF) {
-        printf("Invalid thread number, range=0..%d\n", RCV_THREAD_NUMOF - 1);
-        return 1;
-    }
-    if (thread_busy[thread_nb]) {
-        puts("Thread already in use");
-        return 1;
-    }
-    struct isotp_options isotp_opt;
-    memset(&isotp_opt, 0, sizeof(isotp_opt));
-    isotp_opt.tx_id = strtoul(argv[4], NULL, 16);
-    isotp_opt.rx_id = strtoul(argv[5], NULL, 16);
-
-#ifdef MODULE_CONN_CAN_ISOTP_MULTI
-    conn_can_isotp_init_slave(&conn_isotp[thread_nb], (conn_can_isotp_slave_t *)&conn_isotp[thread_nb]);
-#endif
-    ret = conn_can_isotp_create(&conn_isotp[thread_nb], &isotp_opt, ifnum);
-    if (ret == 0) {
-        ret = conn_can_isotp_bind(&conn_isotp[thread_nb], NULL);
-    }
-    if (ret < 0) {
-        puts("Error when binding connection");
-        return 1;
-    }
-    thread_busy[thread_nb] = 1;
-    return 0;
-}
-
-static int _send_isotp(int argc, char **argv)
-{
-    if (argc < 4) {
-        print_usage();
-        return 1;
-    }
-    int thread_nb = strtoul(argv[2], NULL, 0);
-    if (thread_nb >= RCV_THREAD_NUMOF) {
-        printf("Invalid thread number, range=0..%d\n", RCV_THREAD_NUMOF - 1);
-        return 1;
-    }
-    int len = argc - 3;
-    uint8_t data[len];
-
-    for (int i = 0; i < len; i++) {
-        data[i] = strtol(argv[3 + i], NULL, 16);
-    }
-
-    msg_t msg, reply;
-    can_opt_t opt;
-    opt.data = data;
-    opt.data_len = len;
-    msg.type = CAN_MSG_SEND_ISOTP;
-    msg.content.ptr = &opt;
-    int res = msg_send_receive(&msg, &reply, receive_pid[thread_nb]);
-    if (res < 0 || (int)reply.content.value < 0) {
-        puts("Error when sending");
-        return 1;
-    }
-    return 0;
-}
-
-static int _receive_isotp(int argc, char **argv)
-{
-    if (argc < 4) {
-        print_usage();
-        return 1;
-    }
-    int thread_nb = strtol(argv[2], NULL, 0);
-    if (thread_nb >= RCV_THREAD_NUMOF) {
-        printf("Invalid thread number, range=0..%d\n", RCV_THREAD_NUMOF - 1);
-        return 1;
-    }
-    uint32_t timeout = strtoul(argv[3], NULL, 0);
-
-    msg_t msg;
-    msg.type = CAN_MSG_RECV_ISOTP;
-    msg.content.value = timeout;
-    msg_send(&msg, receive_pid[thread_nb]);
-
-    return 0;
-}
-
-static int _close_isotp(int argc, char **argv)
-{
-    if (argc < 2) {
-        print_usage();
-        return 1;
-    }
-    int thread_nb = strtol(argv[2], NULL, 0);
-    if (thread_nb >= RCV_THREAD_NUMOF) {
-        printf("Invalid thread number, range=0..%d\n", RCV_THREAD_NUMOF - 1);
-        return 1;
-    }
-    conn_can_isotp_close(&conn_isotp[thread_nb]);
-    thread_busy[thread_nb] = 0;
-    return 0;
-}
-#endif /* MODULE_CAN_ISOTP */
 
 static int _get_filter(int argc, char **argv)
 {
@@ -523,20 +396,6 @@ int _can_handler(int argc, char **argv)
     else if (strncmp(argv[1], "close", 6) == 0) {
         return _close(argc, argv);
     }
-#ifdef MODULE_CAN_ISOTP
-    else if (strncmp(argv[1], "bind_isotp", 11) == 0) {
-        return _bind_isotp(argc, argv);
-    }
-    else if (strncmp(argv[1], "send_isotp", 11) == 0) {
-        return _send_isotp(argc, argv);
-    }
-    else if (strncmp(argv[1], "recv_isotp", 11) == 0) {
-        return _receive_isotp(argc, argv);
-    }
-    else if (strncmp(argv[1], "close_isotp", 12) == 0) {
-        return _close_isotp(argc, argv);
-    }
-#endif
     else if (strncmp(argv[1], "get_filter", 10) == 0) {
         return _get_filter(argc, argv);
     }
