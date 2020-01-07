@@ -2,6 +2,7 @@
 #include <string.h>
 #include "can/can.h"
 #include "net/someip.h"
+#include "byteorder.h"
 
 // Request ID, Protocol version, Interface version, Message type, Return Code
 #define HEADERSIZE 8
@@ -69,7 +70,9 @@
 static void set_msg_id(struct message_id *msg_id, uint32_t can_id)
 {
     msg_id->service_id = (0xFFFF0000 & can_id) >> 16;
+    msg_id->service_id = htons(msg_id->service_id);
     msg_id->method_id = (0x0000FFFF & can_id);
+    msg_id->method_id = htons(msg_id->method_id);
 }
 
 static uint32_t set_length(uint8_t dlc)
@@ -80,7 +83,9 @@ static uint32_t set_length(uint8_t dlc)
 static void set_request_id(struct request_id *rqst_id, uint32_t can_id)
 {
     rqst_id->client_id = (0xFFFF0000 & can_id) >> 16;
+    rqst_id->client_id = htons(rqst_id->client_id);
     rqst_id->session_id = (0x0000FFFF & can_id);
+    rqst_id->session_id = htons(rqst_id->session_id);
 }
 
 static void fill_payload(uint8_t *payload, const uint8_t *data, uint8_t dlc)
@@ -94,6 +99,7 @@ void can_to_someIP(const struct can_frame *frame, struct someip_hdr *hdr)
 {
     set_msg_id(&hdr->msg_id, frame->can_id);
     hdr->length = set_length(frame->can_dlc);
+    hdr->length = htonl(hdr->length);
     set_request_id(&hdr->rqst_id, frame->can_id);
 
     hdr->protocol_version = 0x01;
