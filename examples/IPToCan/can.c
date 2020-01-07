@@ -75,7 +75,7 @@ static int thread_busy[RCV_THREAD_NUMOF];
 
 extern void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data);
 extern void can_to_udp_sock(uint8_t *data, int size);
-extern void can_to_someIP(const struct can_frame *frame, uint8_t *buf);
+extern int can_to_someIP(const struct can_frame *frame, uint8_t *buf, uint8_t size);
 
 #define HEADER 16
 #define HEADERSIZE(size) (HEADER + size)
@@ -591,9 +591,9 @@ static void *_receive_thread(void *args)
 
                 uint8_t buf[HEADERSIZE(frame.can_dlc)];
 
-                can_to_someIP(&frame, buf);
+                can_to_someIP(&frame, buf, HEADERSIZE(frame.can_dlc));
 
-                can_to_udp_sock(buf, HEADERSIZE(frame.can_dlc));
+                //can_to_udp_sock(buf, HEADERSIZE(frame.can_dlc));
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);

@@ -10,14 +10,14 @@ uint16_t port = 0;
 
 char rcv_thread_stack[THREAD_STACKSIZE_MAIN];
 
-extern void someIP_to_can(uint8_t *buf, int size);
+extern void someIP_to_can(uint8_t *buf, uint32_t size);
 
 static void *_receive(void *arg)
 {
     (void)arg;
     uint8_t buf[24];
 
-    //uint32_t length;
+    uint32_t length;
 
     while (1) {
         sock_udp_ep_t remote;
@@ -25,9 +25,14 @@ static void *_receive(void *arg)
         if (sock_udp_recv(&sock, buf, sizeof(buf), SOCK_NO_TIMEOUT, &remote) >= 0) {
             puts("received MSG");
         }
-        //length = buf[7] | buf[6] << 8 | buf[5] << 16 | buf[4] << 24;
+        length = buf[7] | buf[6] << 8 | buf[5] << 16 | buf[4] << 24;
+        printf("Length: %ld\n", length);
 
-        //someIP_to_can(buf, 8 + length);
+        // for (size_t i = 0; i < (length+8); i++) {
+        //     printf("BUF[%d]: %x\n", i, buf[i]);
+        // }
+
+        someIP_to_can(buf, 8 + length);
     }
 
     return NULL;
@@ -75,7 +80,7 @@ int _send(uint8_t *data, int size)
 int send(void)
 {
     sock_udp_ep_t remote = { .family = AF_INET6 };
-    remote.port = 8808;
+    remote.port = port;
     remote.addr.ipv6[0] = 1;
 
     uint8_t data[24];
@@ -129,13 +134,12 @@ int send(void)
 void set_port(uint16_t new_port)
 {
     port = new_port;
-    printf("Port is: %d", port);
 }
 
 int udp_sock_cmd(int argc, char **argv)
 {
     if (argc < 2) {
-        puts("udp_sock [start/send] [port]");
+        puts("udp_sock [start/send/port]");
         return 1;
     }
     if (strcmp(argv[1], "start") == 0) {

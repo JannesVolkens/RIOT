@@ -6,37 +6,36 @@
 #include "can/conn/isotp.h"
 #include "can/device.h"
 
+uint8_t dlc = 0;
+
 void set_ID(uint8_t *buf, struct can_frame *frame)
 {
     uint32_t id = buf[3] | buf[2] << 8 | buf[1] << 16 | buf[0] << 24;
     frame->can_id = id;
 }
 
-void set_dlc(uint8_t *buf, struct can_frame *frame)
-{
-    uint8_t dlc = buf[7] - 8;
-    frame->can_dlc = dlc;
-}
-
 void set_data(uint8_t *buf, struct can_frame *frame)
 {
-    uint8_t dlc = buf[7] - 8;
-
     for (int i = 0; i < dlc; i++) {
         frame->data[i] = buf[16 + i];
     }
 }
 
-void someIP_to_can(uint8_t *buf, int size)
+void someIP_to_can(uint8_t *buf, uint32_t size)
 {
-    printf("SIZE: %d\n", size);
+    dlc = size - 16;
     struct can_frame frame;
 
     int ifnum = 0;
 
     set_ID(buf, &frame);
-    set_dlc(buf, &frame);
+    frame.can_dlc = dlc;
     set_data(buf, &frame);
+
+    // printf("ID: %lx\nDLC: %x\n", frame.can_id, frame.can_dlc);
+    // for (uint8_t i = 0; i < dlc; i++) {
+    //     printf("DATA[%d]: %x\n", i, frame.data[i]);
+    // }
 
     conn_can_raw_t conn;
     conn_can_raw_create(&conn, NULL, 0, ifnum, 0);

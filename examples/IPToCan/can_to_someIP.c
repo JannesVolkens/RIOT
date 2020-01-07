@@ -5,7 +5,9 @@
 // Request ID, Protocol version, Interface version, Message type, Return Code
 #define HEADERSIZE 8
 
-#define BUFSIZE(size) (8 + size)
+//16 Byte header and at least 1 Byte and max 8 Byte data
+#define MINBUFSIZE 17
+#define MAXBUFSIZE 24
 
 static uint32_t get_length(uint8_t dlc)
 {
@@ -43,8 +45,12 @@ static void fill_payload(uint8_t *buf, const uint8_t *data, uint8_t dlc)
     }
 }
 
-void can_to_someIP(const struct can_frame *frame, uint8_t *buf)
+int can_to_someIP(const struct can_frame *frame, uint8_t *buf, uint8_t size)
 {
+    if (size < MINBUFSIZE || size > MAXBUFSIZE) {
+        puts("Wrong buf size!");
+        return -1;
+    }
     set_ID(buf, frame->can_id);
     set_length(buf, get_length(frame->can_dlc));
     set_client_id(buf, 0xabcd, 0x0000);
@@ -55,4 +61,6 @@ void can_to_someIP(const struct can_frame *frame, uint8_t *buf)
     buf[15] = 0x00;
 
     fill_payload(buf, frame->data, frame->can_dlc);
+
+    return 0;
 }
