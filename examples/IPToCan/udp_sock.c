@@ -24,10 +24,9 @@ static void *_receive(void *arg)
         sock_udp_ep_t remote;
 
         if (sock_udp_recv(&sock, buf, sizeof(buf), SOCK_NO_TIMEOUT, &remote) >= 0) {
-            puts("received MSG");
+            puts("MSG received");
         }
         length = buf[7] | buf[6] << 8 | buf[5] << 16 | buf[4] << 24;
-        printf("Length: %ld\n", length);
 
         for (size_t i = 0; i < (length+8); i++) {
             printf("BUF[%d]: %x\n", i, buf[i]);
