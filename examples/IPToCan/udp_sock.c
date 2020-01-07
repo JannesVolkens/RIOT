@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "net/sock/udp.h"
 #include "thread.h"
+#include "net/someip.h"
 
 // 4 bytes ID, 1 byte DLC, 1 <= size >= 8 Data
 #define BUFSIZE(size) (5 + size)
@@ -17,22 +18,18 @@ static void *_receive(void *arg)
     (void)arg;
     uint8_t buf[24];
 
-    uint32_t length;
-
     while (1) {
         sock_udp_ep_t remote;
 
         if (sock_udp_recv(&sock, buf, sizeof(buf), SOCK_NO_TIMEOUT, &remote) >= 0) {
             puts("received MSG");
         }
-        length = buf[7] | buf[6] << 8 | buf[5] << 16 | buf[4] << 24;
-        printf("Length: %ld\n", length);
 
-        // for (size_t i = 0; i < (length+8); i++) {
-        //     printf("BUF[%d]: %x\n", i, buf[i]);
-        // }
+        for (size_t i = 0; i < 24; i++) {
+            printf("BUF[%d]: %x\n", i, buf[i]);
+        }
 
-        someIP_to_can(buf, 8 + length);
+        // someIP_to_can(buf, 8 + length);
     }
 
     return NULL;
@@ -57,7 +54,7 @@ static int start_socket(uint16_t port)
     return 0;
 }
 
-int _send(uint8_t *data, int size)
+int _send(struct someip_hdr *data, int size)
 {
     sock_udp_ep_t remote = { .family = AF_INET6 };
     remote.port = port;
