@@ -86,10 +86,10 @@ int send(void)
     uint8_t data[24];
 
     //MSGID
-    data[0] = 0x00;
-    data[1] = 0x00;
-    data[2] = 0x03;
-    data[3] = 0xfc;
+    data[0] = 0x60;
+    data[1] = 0x17;
+    data[2] = 0xC0;
+    data[3] = 0x20;
 
     //LENGTH
     data[4] = 0x00;
@@ -105,8 +105,8 @@ int send(void)
 
     //Protocol/Interface/MSGType/Return
     data[12] = 0x01;
-    data[13] = 0x00;
-    data[14] = 0x01;
+    data[13] = 0x03;
+    data[14] = 0x02;
     data[15] = 0x00;
 
     //PAYLOAD

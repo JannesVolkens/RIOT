@@ -32,11 +32,6 @@ void someIP_to_can(uint8_t *buf, uint32_t size)
     frame.can_dlc = dlc;
     set_data(buf, &frame);
 
-    // printf("ID: %lx\nDLC: %x\n", frame.can_id, frame.can_dlc);
-    // for (uint8_t i = 0; i < dlc; i++) {
-    //     printf("DATA[%d]: %x\n", i, frame.data[i]);
-    // }
-
     conn_can_raw_t conn;
     conn_can_raw_create(&conn, NULL, 0, ifnum, 0);
     int ret = conn_can_raw_send(&conn, &frame, 0);
