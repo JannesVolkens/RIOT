@@ -27,12 +27,10 @@
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
 extern int _can_handler(int argc, char **argv);
-extern int _can_trx_handler(int argc, char **argv);
 extern int udp_sock_cmd(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
     { "test_can", "CAN test functions", _can_handler},
-    { "can_trx", "can_trx functions", _can_trx_handler},
     { "udp_sock", "socket functions", udp_sock_cmd},
     { NULL, NULL, NULL }
 };

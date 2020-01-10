@@ -9,8 +9,9 @@ struct someip_hdr hdr;
 static void set_msg_id(uint32_t can_id)
 {
     /* TODO define how the message ID should be set */
-    hdr.msg_id.service_id = htons((0xFFFF0000 & can_id) >> 16);
-    hdr.msg_id.method_id = htons((0x0000FFFF & can_id));
+    // hdr.msg_id.service_id = htons((0xFFFF0000 & can_id) >> 16);
+    // hdr.msg_id.method_id = htons((0x0000FFFF & can_id));
+    hdr.msg_id = htonl(can_id);
 }
 
 static uint32_t set_length(uint8_t dlc)

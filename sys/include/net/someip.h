@@ -17,6 +17,7 @@ extern "C" {
 #define MESSAGE_TYPE 0x02
 #define RETURN_CODE 0x00
 
+/* TODO Check whether this is needed or not */
 struct message_id {
     uint16_t service_id;
     uint16_t method_id;
@@ -28,7 +29,8 @@ struct request_id {
 };
 
 struct someip_hdr {
-    struct message_id msg_id;
+    //struct message_id msg_id;
+    uint32_t msg_id;
     uint32_t length;
     struct request_id rqst_id;
     uint8_t protocol_version;

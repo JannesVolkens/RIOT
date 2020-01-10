@@ -74,6 +74,8 @@ extern struct someip_hdr can_to_someIP(const struct can_frame *frame);
 
 static void print_usage(void)
 {
+    puts("test_can init [trx_id]");
+    puts("test_can mode [mode]");
     puts("test_can send ifnum can_id [B1 [B2 [B3 [B4 [B5 [B6 [B7 [B8]]]]]]]]");
     printf("test_can recv ifnum user_id timeout can_id1 [can_id2..can_id%d]\n", MAX_FILTER);
     puts("test_can close user_id");
@@ -312,7 +314,7 @@ static void *_receive_thread(void *args)
     return NULL;
 }
 
-static int init(int argc, char **argv) {
+static int _init(int argc, char **argv) {
 
     if (argc < 3) {
         puts("trx_id needed");
@@ -324,7 +326,6 @@ static int init(int argc, char **argv) {
         int res = can_trx_init(devs[trx]);
         if (res >= 0) {
             puts("Trx successfully initialized");
-            //return 0;
         }
         else {
             printf("Error when initializing trx: %d\n", res);
@@ -346,7 +347,7 @@ static int init(int argc, char **argv) {
     return 0;
 }
 
-static int set_mode(int argc, char **argv) {
+static int _set_mode(int argc, char **argv) {
 
     if (argc < 4) {
         puts("trx_id and mode needed");
@@ -372,48 +373,35 @@ static int set_mode(int argc, char **argv) {
     return 1;
 }
 
-int _can_trx_handler(int argc, char **argv)
-{
-    if (argc < 2) {
-        printf("can_trx [init/mode]\n");
-        return 1;
-    }
-    else if (strncmp(argv[1], "init", 5) == 0) {
-        return init(argc, argv);
-    }
-    else if (strncmp(argv[1], "mode", 5) == 0) {
-        return set_mode(argc, argv);
-    }
-    else {
-        printf("unknown command: %s\n", argv[1]);
-        return 1;
-    }
-    return 0;
-}
-
 int _can_handler(int argc, char **argv)
 {
     if (argc < 2) {
         print_usage();
         return 1;
     }
-    else if (strncmp(argv[1], "send", 5) == 0) {
+    else if (strcmp(argv[1], "send") == 0) {
         return _send(argc, argv);
     }
-    else if (strncmp(argv[1], "recv", 5) == 0) {
+    else if (strcmp(argv[1], "recv") == 0) {
         return _receive(argc, argv);
     }
-    else if (strncmp(argv[1], "close", 6) == 0) {
+    else if (strcmp(argv[1], "close") == 0) {
         return _close(argc, argv);
     }
-    else if (strncmp(argv[1], "get_filter", 10) == 0) {
+    else if (strcmp(argv[1], "get_filter") == 0) {
         return _get_filter(argc, argv);
     }
-    else if (strncmp(argv[1], "set_bitrate", 11) == 0) {
+    else if (strcmp(argv[1], "set_bitrate") == 0) {
         return _set_bitrate(argc, argv);
     }
-    else if (strncmp(argv[1], "get_bitrate", 11) == 0) {
+    else if (strcmp(argv[1], "get_bitrate") == 0) {
         return _get_bitrate(argc, argv);
+    }
+    else if (strcmp(argv[1], "init") == 0) {
+        return _init(argc, argv);
+    }
+    else if (strcmp(argv[1], "mode") == 0) {
+        return _set_mode(argc, argv);
     }
     else {
         printf("unknown command: %s\n", argv[1]);

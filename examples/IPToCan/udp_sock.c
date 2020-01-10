@@ -134,6 +134,7 @@ static int _send(void)
 static void _set_port(uint16_t new_port)
 {
     port = new_port;
+    puts("Dst-Port set");
 }
 
 int udp_sock_cmd(int argc, char **argv)
