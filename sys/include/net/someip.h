@@ -7,7 +7,8 @@ extern "C" {
 
 #include <stdint.h>
 
-#define SOMEIP_MAX_PLEN (1400)
+/* TODO define how bit the payload should be */
+#define SOMEIP_MAX_PLEN (8)
 
 struct message_id {
     uint16_t service_id;

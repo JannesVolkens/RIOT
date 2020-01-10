@@ -73,7 +73,7 @@ extern void can_to_udp_sock(struct someip_hdr *data, int size);
 extern void can_to_someIP(const struct can_frame *frame, struct someip_hdr *hdr);
 
 #define HEADER 16
-#define HEADERSIZE(size) (HEADER + size)
+#define SOMEIPSIZE(size) (HEADER + size)
 
 static void print_usage(void)
 {
@@ -451,13 +451,13 @@ static void *_receive_thread(void *args)
                 }
                 printf("\n");
 
-                //uint8_t buf[HEADERSIZE(frame.can_dlc)];
+                //uint8_t buf[SOMEIPSIZE(frame.can_dlc)];
 
                 struct someip_hdr data;
-                // can_to_someIP(&frame, buf, HEADERSIZE(frame.can_dlc));
+                // can_to_someIP(&frame, buf, SOMEIPSIZE(frame.can_dlc));
                 can_to_someIP(&frame, &data);
 
-                can_to_udp_sock(&data, HEADERSIZE(frame.can_dlc));
+                can_to_udp_sock(&data, SOMEIPSIZE(frame.can_dlc));
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);

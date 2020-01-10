@@ -13,6 +13,7 @@
 
 static void set_msg_id(struct message_id *msg_id, uint32_t can_id)
 {
+    /* TODO define how the message ID should be set */
     msg_id->service_id = htons((0xFFFF0000 & can_id) >> 16);
     msg_id->method_id = htons((0x0000FFFF & can_id));
 }
@@ -24,7 +25,7 @@ static uint32_t set_length(uint8_t dlc)
 
 static void set_request_id(struct request_id *rqst_id)
 {
-    /* TODO define how request ID should be set */
+    /* TODO define how the request ID should be set */
     // rqst_id->client_id = htons((0xFFFF0000 & can_id) >> 16);
     // rqst_id->session_id = htons((0x0000FFFF & can_id));
     rqst_id->client_id = 0x00;
