@@ -67,44 +67,19 @@ static char thread_stack[RCV_THREAD_NUMOF][THREAD_STACKSIZE];
 
 static int thread_busy[RCV_THREAD_NUMOF];
 
-extern void can_to_udp(uint32_t ID, uint8_t dlc, uint8_t *data);
-extern void can_to_udp_sock(struct someip_hdr *data, int size);
-// extern int can_to_someIP(const struct can_frame *frame, uint8_t *buf, uint8_t size);
-extern void can_to_someIP(const struct can_frame *frame, struct someip_hdr *hdr);
+extern void _send_udp_sock(struct someip_hdr *data, int size);
+extern struct someip_hdr can_to_someIP(const struct can_frame *frame);
 
-#define HEADER 16
-#define SOMEIPSIZE(size) (HEADER + size)
+#define SOMEIPSIZE(size) (SOMEIP_FULL_HDR_SIZE + size)
 
 static void print_usage(void)
 {
-    puts("test_can list");
     puts("test_can send ifnum can_id [B1 [B2 [B3 [B4 [B5 [B6 [B7 [B8]]]]]]]]");
     printf("test_can recv ifnum user_id timeout can_id1 [can_id2..can_id%d]\n", MAX_FILTER);
     puts("test_can close user_id");
     puts("test_can get_filter ifnum");
     puts("test_can set_bitrate ifnum bitrate [sample_point]");
     puts("test_can get_bitrate ifnum");
-    puts("test_can get_counter ifnum");
-    puts("test_can power_up ifnum");
-    puts("test_can power_down ifnum");
-}
-
-static int _list(int argc, char **argv) {
-
-    (void)argc;
-    (void)argv;
-
-    for (int i = 0; i < CAN_DLL_NUMOF; i++) {
-        const char *name = raw_can_get_name_by_ifnum(i);
-        if (name) {
-            printf("CAN #%d: %s\n", i, name);
-        }
-        else {
-            break;
-        }
-    }
-
-    return 0;
 }
 
 static int _send(int argc, char **argv)
@@ -292,138 +267,6 @@ static int _get_bitrate(int argc, char **argv)
     return 0;
 }
 
-static int _get_counter(int argc, char **argv)
-{
-    if (argc < 3) {
-        print_usage();
-        return 1;
-    }
-
-    int res = 0;
-    int ifnum = strtol(argv[2], NULL, 0);
-    if (ifnum >= CAN_DLL_NUMOF) {
-        puts("Invalid interface number");
-        return 1;
-    }
-
-    uint16_t cnt;
-    can_opt_t opt;
-    opt.data = &cnt;
-    opt.data_len = sizeof(cnt);
-    opt.opt = CANOPT_TEC;
-
-    int ret = raw_can_get_can_opt(ifnum, &opt);
-    if (ret < 0) {
-        printf("Error when getting TEC: res=%d\n", ret);
-        res = 1;
-    }
-    else {
-        printf("TEC=%" PRIu16, cnt);
-    }
-
-    opt.opt = CANOPT_REC;
-
-    ret = raw_can_get_can_opt(ifnum, &opt);
-    if (ret < 0) {
-        printf("\nError when getting REC: res=%d\n", ret);
-        res = 1;
-    }
-    else {
-        printf(", REC=%" PRIu16 "\n", cnt);
-    }
-
-    return res;
-}
-
-static int _power_up(int argc, char **argv)
-{
-    if (argc < 3) {
-        print_usage();
-        return 1;
-    }
-
-    int res = 0;
-    int ifnum = strtol(argv[2], NULL, 0);
-    if (ifnum >= CAN_DLL_NUMOF) {
-        puts("Invalid interface number");
-        return 1;
-    }
-
-    int ret = raw_can_power_up(ifnum);
-    if (ret < 0) {
-        printf("Error when powering up: res=%d\n", ret);
-        res = 1;
-    }
-
-    return res;
-}
-
-static int _power_down(int argc, char **argv)
-{
-    if (argc < 3) {
-        print_usage();
-        return 1;
-    }
-
-    int res = 0;
-    int ifnum = strtol(argv[2], NULL, 0);
-    if (ifnum >= CAN_DLL_NUMOF) {
-        puts("Invalid interface number");
-        return 1;
-    }
-
-    int ret = raw_can_power_down(ifnum);
-    if (ret < 0) {
-        printf("Error when powering up: res=%d\n", ret);
-        res = 1;
-    }
-
-    return res;
-}
-
-int _can_handler(int argc, char **argv)
-{
-    if (argc < 2) {
-        print_usage();
-        return 1;
-    }
-    else if (strncmp(argv[1], "list", 5) == 0) {
-        return _list(argc, argv);
-    }
-    else if (strncmp(argv[1], "send", 5) == 0) {
-        return _send(argc, argv);
-    }
-    else if (strncmp(argv[1], "recv", 5) == 0) {
-        return _receive(argc, argv);
-    }
-    else if (strncmp(argv[1], "close", 6) == 0) {
-        return _close(argc, argv);
-    }
-    else if (strncmp(argv[1], "get_filter", 10) == 0) {
-        return _get_filter(argc, argv);
-    }
-    else if (strncmp(argv[1], "set_bitrate", 11) == 0) {
-        return _set_bitrate(argc, argv);
-    }
-    else if (strncmp(argv[1], "get_bitrate", 11) == 0) {
-        return _get_bitrate(argc, argv);
-    }
-    else if (strncmp(argv[1], "get_counter", 11) == 0) {
-        return _get_counter(argc, argv);
-    }
-    else if (strncmp(argv[1], "power_up", 9) == 0) {
-        return _power_up(argc, argv);
-    }
-    else if (strncmp(argv[1], "power_down", 11) == 0) {
-        return _power_down(argc, argv);
-    }
-    else {
-        printf("unknown command: %s\n", argv[1]);
-        return 1;
-    }
-    return 0;
-}
-
 static void *_receive_thread(void *args)
 {
     int thread_nb = (int)args;
@@ -451,13 +294,9 @@ static void *_receive_thread(void *args)
                 }
                 printf("\n");
 
-                //uint8_t buf[SOMEIPSIZE(frame.can_dlc)];
+                struct someip_hdr data = can_to_someIP(&frame);
 
-                struct someip_hdr data;
-                // can_to_someIP(&frame, buf, SOMEIPSIZE(frame.can_dlc));
-                can_to_someIP(&frame, &data);
-
-                can_to_udp_sock(&data, SOMEIPSIZE(frame.can_dlc));
+                _send_udp_sock(&data, SOMEIPSIZE(frame.can_dlc));
             }
             printf("%d: recv terminated: ret=%d\n", thread_nb, ret);
             conn_can_raw_close(&conn[thread_nb]);
@@ -544,6 +383,37 @@ int _can_trx_handler(int argc, char **argv)
     }
     else if (strncmp(argv[1], "mode", 5) == 0) {
         return set_mode(argc, argv);
+    }
+    else {
+        printf("unknown command: %s\n", argv[1]);
+        return 1;
+    }
+    return 0;
+}
+
+int _can_handler(int argc, char **argv)
+{
+    if (argc < 2) {
+        print_usage();
+        return 1;
+    }
+    else if (strncmp(argv[1], "send", 5) == 0) {
+        return _send(argc, argv);
+    }
+    else if (strncmp(argv[1], "recv", 5) == 0) {
+        return _receive(argc, argv);
+    }
+    else if (strncmp(argv[1], "close", 6) == 0) {
+        return _close(argc, argv);
+    }
+    else if (strncmp(argv[1], "get_filter", 10) == 0) {
+        return _get_filter(argc, argv);
+    }
+    else if (strncmp(argv[1], "set_bitrate", 11) == 0) {
+        return _set_bitrate(argc, argv);
+    }
+    else if (strncmp(argv[1], "get_bitrate", 11) == 0) {
+        return _get_bitrate(argc, argv);
     }
     else {
         printf("unknown command: %s\n", argv[1]);

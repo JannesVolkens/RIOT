@@ -9,6 +9,13 @@ extern "C" {
 
 /* TODO define how bit the payload should be */
 #define SOMEIP_MAX_PLEN (8)
+#define SOMEIP_HDR_SIZE (8)
+#define SOMEIP_FULL_HDR_SIZE (16)
+
+#define PROTOCOL_VERSION 0x01
+#define INTERFACE_VERSION 0x03
+#define MESSAGE_TYPE 0x02
+#define RETURN_CODE 0x00
 
 struct message_id {
     uint16_t service_id;

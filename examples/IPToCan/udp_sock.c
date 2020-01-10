@@ -38,7 +38,7 @@ static void *_receive(void *arg)
     return NULL;
 }
 
-static int start_socket(uint16_t port)
+static int _start_socket(uint16_t port)
 {
     sock_udp_ep_t local = SOCK_IPV6_EP_ANY;
     local.port = port;
@@ -57,7 +57,7 @@ static int start_socket(uint16_t port)
     return 0;
 }
 
-int _send(struct someip_hdr *data, int size)
+int _send_udp_sock(struct someip_hdr *data, int size)
 {
     sock_udp_ep_t remote = { .family = AF_INET6 };
     remote.port = port;
@@ -77,7 +77,7 @@ int _send(struct someip_hdr *data, int size)
     return 0;
 }
 
-int send(void)
+static int _send(void)
 {
     sock_udp_ep_t remote = { .family = AF_INET6 };
     remote.port = port;
@@ -131,7 +131,7 @@ int send(void)
     return 0;
 }
 
-void set_port(uint16_t new_port)
+static void _set_port(uint16_t new_port)
 {
     port = new_port;
 }
@@ -147,15 +147,15 @@ int udp_sock_cmd(int argc, char **argv)
               puts("udp_sock start [port]");
               return 1;
           }
-          start_socket(atoi(argv[2]));
+          _start_socket(atoi(argv[2]));
     } else if (strcmp(argv[1], "send") == 0) {
-          send();
+          _send();
     } else if (strcmp(argv[1], "port") == 0) {
           if (argc < 3) {
               puts("udp_sock port [port]");
               return 1;
           }
-          set_port(atoi(argv[2]));
+          _set_port(atoi(argv[2]));
     }
 
     return 0;

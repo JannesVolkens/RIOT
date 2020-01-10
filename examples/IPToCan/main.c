@@ -22,7 +22,6 @@
 
 #include "shell.h"
 #include "msg.h"
-#include "net/someip.h"
 
 #define MAIN_QUEUE_SIZE     (8)
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
@@ -30,12 +29,6 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 extern int _can_handler(int argc, char **argv);
 extern int _can_trx_handler(int argc, char **argv);
 extern int udp_sock_cmd(int argc, char **argv);
-extern int _send(struct someip_hdr *data, int size);
-
-void can_to_udp_sock(struct someip_hdr *data, int size)
-{
-    _send(data, size);
-}
 
 static const shell_command_t shell_commands[] = {
     { "test_can", "CAN test functions", _can_handler},
