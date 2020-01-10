@@ -7,7 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 
-/* TODO define how bit the payload should be */
+/* TODO define how big the payload should be */
 #define SOMEIP_MAX_PLEN (8)
 #define SOMEIP_HDR_SIZE (8)
 #define SOMEIP_FULL_HDR_SIZE (16)
