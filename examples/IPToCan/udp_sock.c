@@ -83,13 +83,13 @@ static int _send(void)
     remote.port = port;
     remote.addr.ipv6[0] = 1;
 
-    uint8_t data[24];
+    uint8_t data[22];
 
     //MSGID
-    data[0] = 0x60;
-    data[1] = 0x17;
-    data[2] = 0xC0;
-    data[3] = 0x20;
+    data[0] = 0x00;
+    data[1] = 0x00;
+    data[2] = 0x03;
+    data[3] = 0xFC;
 
     //LENGTH
     data[4] = 0x00;
