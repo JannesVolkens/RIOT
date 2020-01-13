@@ -11,6 +11,10 @@ uint8_t dlc = 0;
 void set_ID(uint8_t *buf, struct can_frame *frame)
 {
     uint32_t id = buf[3] | buf[2] << 8 | buf[1] << 16 | buf[0] << 24;
+    if (id > CAN_SFF_MASK) {
+        id = id | CAN_EFF_FLAG;
+    }
+
     frame->can_id = id;
 }
 
