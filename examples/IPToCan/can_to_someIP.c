@@ -22,8 +22,8 @@ static uint32_t set_length(uint8_t dlc)
 static void set_request_id(void)
 {
     /* TODO define how the request ID should be set */
-    hdr.rqst_id.client_id = 0x00;
-    hdr.rqst_id.session_id = 0x00;
+    hdr.request_id.client_id = 0x00;
+    hdr.request_id.session_id = 0x00;
 
 }
 
