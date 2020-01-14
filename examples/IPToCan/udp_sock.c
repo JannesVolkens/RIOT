@@ -44,9 +44,9 @@ static int _start_socket(uint16_t port)
     local.port = port;
 
     if (sock_udp_create(&sock, &local, NULL, 0) < 0) {
-    puts("Error creating UDP sock");
+        puts("Error creating UDP sock");
 
-    return 1;
+        return 1;
     }
 
     thread_create(rcv_thread_stack, sizeof(rcv_thread_stack), THREAD_PRIORITY_MAIN - 1,
@@ -88,8 +88,8 @@ static int _send(void)
     //MSGID
     data[0] = 0x00;
     data[1] = 0x00;
-    data[2] = 0x03;
-    data[3] = 0xFC;
+    data[2] = 0x0F;
+    data[3] = 0xFF;
 
     //LENGTH
     data[4] = 0x00;
