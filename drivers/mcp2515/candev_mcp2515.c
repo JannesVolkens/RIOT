@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_mcp2515 Stand-Alone CAN Controller With SPI Interface
+ * @ingroup     drivers_mcp2515
  * @{
  *
  * @file

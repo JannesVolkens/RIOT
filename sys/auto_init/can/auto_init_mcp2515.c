@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup auto_init
+ * @ingroup sys_auto_init
  * @{
  * @file
  * @brief       initializes mcp2515 can device
@@ -48,8 +48,11 @@ void auto_init_can_mcp2515(void) {
         candev_dev_mcp2515[i].tx_wakeup_timeout = candev_mcp2515_params[i].tx_wakeup_timeout;
 #endif
 
-        can_device_init(_can_mcp2515_stacks[i], CANDEV_MCP2515_STACKSIZE, CANDEV_MCP2515_BASE_PRIORITY + i,
-                        candev_mcp2515_params[i].name, &candev_dev_mcp2515[i]);
+        can_device_init(_can_mcp2515_stacks[i],
+                            CANDEV_MCP2515_STACKSIZE,
+                            CANDEV_MCP2515_BASE_PRIORITY + i,
+                            candev_mcp2515_params[i].name,
+                            &candev_dev_mcp2515[i]);
     }
 }
 #else

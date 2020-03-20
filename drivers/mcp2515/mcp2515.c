@@ -89,7 +89,7 @@ int mcp2515_init(candev_mcp2515_t *dev, void(*irq_handler_cb)(void*))
 {
     int res;
     res = gpio_init_int(dev->conf->int_pin, GPIO_IN_PU, GPIO_FALLING, (gpio_cb_t)irq_handler_cb, (void *)dev);
-    if(res != 0) {
+    if (res != 0) {
         DEBUG("Error setting interrupt pin!\n");
         return -1;
     }
@@ -309,7 +309,7 @@ enum mcp2515_interrupt mcp2515_get_irq(candev_mcp2515_t *dev)
 
 int mcp2515_clear_irq(candev_mcp2515_t *dev, enum mcp2515_interrupt irq)
 {
-    if(!irq) { /* no irq's to be cleared */
+    if (!irq) { /* no irq's to be cleared */
         return 0;
     }
     else {
@@ -346,7 +346,7 @@ int mcp2515_set_filter(candev_mcp2515_t *dev, int filter_id, uint32_t filter)
     else {
         fill_standard_id(filter, buf);
     }
-    if(filter_id < 3) {
+    if (filter_id < 3) {
         reg = MCP2515_RXF0SIDH + (filter_id << 2);
     }
     else {
