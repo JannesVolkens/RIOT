@@ -8,9 +8,9 @@ USEMODULE += isrpipe
 CAN_DRIVER ?= native
 
 ifeq ($(CAN_DRIVER), MCP2515)
-    FEATURES_REQUIRED = periph_gpio periph_spi periph_gpio_irq
-
     USEMODULE += mcp2515
+
+	FEATURES_REQUIRED = periph_gpio periph_spi periph_gpio_irq
 
 	#set device paramters
 	TEST_MCP2515_SPI   ?= SPI_DEV\(0\)
@@ -21,9 +21,6 @@ ifeq ($(CAN_DRIVER), MCP2515)
 	TEST_MCP2515_INT ?= GPIO_PIN\(PORT_B,1\)
 	TEST_MCP2515_CLK ?=\(8000000ul\)
 	TEST_MCP2515_BITRATE ?= \(125000\)
-
-	#INT_PIN = PB3 --> requires AVR bank1 on avr. Change accordingly to used hardware.
-	USEMODULE += atmega_pcint0
 
 	# export parameters
 	CFLAGS += -DTEST_MCP2515_SPI=$(TEST_MCP2515_SPI)

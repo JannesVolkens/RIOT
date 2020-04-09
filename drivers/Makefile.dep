@@ -385,6 +385,9 @@ endif
 
 ifneq (,$(filter mcp2515,$(USEMODULE)))
   USEMODULE += xtimer
+  USEMODULE += periph_spi
+  USEMODULE += periph_gpio
+  USEMODULE += periph_gpio_irq
 endif
 
 ifneq (,$(filter mma7660,$(USEMODULE)))

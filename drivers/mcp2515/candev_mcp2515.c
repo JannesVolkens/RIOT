@@ -18,34 +18,25 @@
  * @}
  */
 
-#include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <can/common.h>
+#include <stdbool.h>
+#include <string.h>
 
 #include "candev_mcp2515.h"
 #include "can/common.h"
 #include "can/device.h"
 #include "mcp2515.h"
+#include "mutex.h"
 #include "periph_conf.h"
 #include "thread.h"
 #include "sched.h"
-#include "mutex.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define MAILBOX_USED 1
-#define MAILBOX_EMPTY 0
-
-#define MAILBOX_TO_INTR(mailbox) (INT_RX0 + (mailbox))
-
 #ifndef CANDEV_MCP2515_DEFAULT_BITRATE
 #define CANDEV_MCP2515_DEFAULT_BITRATE 500000
-#endif
-
-#ifndef CANDEV_MCP2515_DEFAULT_SPT
-#define CANDEV_MCP2515_DEFAULT_SPT 875
 #endif
 
 static int _init(candev_t *candev);
@@ -77,14 +68,14 @@ static const candev_driver_t candev_mcp2515_driver = {
 };
 
 static const struct can_bittiming_const bittiming_const = {
-    .tseg1_min = 3,
-    .tseg1_max = 16,
-    .tseg2_min = 2,
-    .tseg2_max = 8,
-    .sjw_max = 4,
-    .brp_min = 1,
-    .brp_max = 64,
-    .brp_inc = 1,
+    .tseg1_min = 3,     /**< Time segment 1 = prop_seg + phase_seg1, min value */
+    .tseg1_max = 16     /**< Time segment 1, max value */,
+    .tseg2_min = 2,     /**< Time segment 2 = phase_seg2, min value */
+    .tseg2_max = 8,     /**< Time segment 2, max value */
+    .sjw_max = 4,       /**< Synchronisation jump width */
+    .brp_min = 1,       /**< Bit-rate prescaler, min value */
+    .brp_max = 64,      /**< Bit-rate prescaler, max value */
+    .brp_inc = 1,       /**< Bit-rate prescaler, increment */
 };
 
 static inline int _max_filters(int mailbox)
@@ -172,7 +163,9 @@ static int _send(candev_t *candev, const struct can_frame *frame)
 
     dev->tx_mailbox[box] = frame;
 
-    mcp2515_send(dev, frame, box);
+    if(mcp2515_send(dev, frame, box) < 0) {
+        return -1;
+    }
 
     return box;
 }
@@ -343,7 +336,7 @@ static int _get(candev_t *candev, canopt_t opt, void *value, size_t max_len)
 static int _set_filter(candev_t *dev, const struct can_filter *filter)
 {
     DEBUG("inside _set_filter of MCP2515\n");
-    int filter_added = -1;
+    bool filter_added = 0;
     struct can_filter f = *filter;
     int res = -1;
     enum mcp2515_mode mode;
@@ -369,7 +362,7 @@ static int _set_filter(candev_t *dev, const struct can_filter *filter)
 
     /* Browse on each mailbox to find an empty space */
     int mailbox_index = 0;
-    while (mailbox_index < MCP2515_RX_MAILBOXES && filter_added == -1) {
+    while (mailbox_index < MCP2515_RX_MAILBOXES && !filter_added ) {
         /* mask unused */
         if (dev_mcp->masks[mailbox_index] == 0) {
             /* set mask */
@@ -421,7 +414,7 @@ static int _set_filter(candev_t *dev, const struct can_filter *filter)
 static int _remove_filter(candev_t *dev, const struct can_filter *filter)
 {
     DEBUG("inside _remove_filter of MCP2515\n");
-    int filter_removed = -1;
+    bool filter_removed;
     struct can_filter f = *filter;
     int res = 0;
     enum mcp2515_mode mode;
@@ -447,7 +440,7 @@ static int _remove_filter(candev_t *dev, const struct can_filter *filter)
 
     int mailbox_index = 0;
     /* Browse on each mailbox to find the right filter id */
-    while (mailbox_index < MCP2515_RX_MAILBOXES && filter_removed == -1) {
+    while (mailbox_index < MCP2515_RX_MAILBOXES && !filter_removed) {
         /* same mask */
         if (dev_mcp->masks[mailbox_index] == f.can_mask) {
             int filter_pos = 0;
@@ -538,8 +531,6 @@ static void _irq_error(candev_mcp2515_t *dev)
 
 static void _irq_message_error(candev_mcp2515_t *dev)
 {
-    (void)dev;
-#if (0)
     int box;
 
     DEBUG("Inside mcp2515 message error irq\n");
@@ -548,20 +539,13 @@ static void _irq_message_error(candev_mcp2515_t *dev)
         if (mcp2515_tx_err_occurred(dev, box)) {
             DEBUG("Box: %d\n", box);
 
-            mutex_lock(&dev->tx_mutex);
             mcp2515_abort(dev, box);
-            xtimer_remove(&dev->tx_mailbox[box].timer);
-            mutex_unlock(&dev->tx_mutex);
 
             _send_event(dev, CANDEV_EVENT_TIMEOUT_TX_CONF,
-                        (void *)dev->tx_mailbox[box].pkt);
+                        NULL);
 
-            mutex_lock(&dev->tx_mutex);
-            dev->tx_mailbox[box].pkt = NULL;
-            mutex_unlock(&dev->tx_mutex);
         }
     }
-#endif
 }
 
 static void _irq_wakeup(const candev_mcp2515_t *dev)

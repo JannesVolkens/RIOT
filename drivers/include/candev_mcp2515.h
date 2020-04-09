@@ -38,6 +38,13 @@ extern "C" {
 #endif
 
 /**
+ * Default sampling point setup
+ */
+#ifndef CANDEV_MCP2515_DEFAULT_SPT
+#define CANDEV_MCP2515_DEFAULT_SPT 875
+#endif
+
+/**
  * Number of transmit mailboxes
  */
 #define MCP2515_TX_MAILBOXES 3

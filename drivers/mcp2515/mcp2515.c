@@ -94,7 +94,6 @@ int mcp2515_init(candev_mcp2515_t *dev, void(*irq_handler_cb)(void*))
         return -1;
     }
     gpio_init(dev->conf->rst_pin, GPIO_OUT);
-    /*the CS pin should be initialized & set in board.c to avoid conflict with other SPI devices */
 
     res = mcp2515_spi_init(dev);
     if (res < 0){
@@ -134,6 +133,10 @@ int mcp2515_send(candev_mcp2515_t *dev, const struct can_frame *frame, int mailb
     uint8_t outbuf[BUFFER_SIZE];
     uint8_t ctrl;
 
+    if (frame->can_dlc > CAN_MAX_DLEN) {
+        return -1;
+    }
+
     //TODO: for speedup, remove this check
     mcp2515_spi_read(dev, TX_CTRL(mailbox), &ctrl, 1);
     if (ctrl & MCP2515_TXBCTRL_TXREQ) {
@@ -156,7 +159,6 @@ int mcp2515_send(candev_mcp2515_t *dev, const struct can_frame *frame, int mailb
 
     mcp2515_spi_write_txbuf(dev, mailbox, outbuf, 5 + frame->can_dlc);
     mcp2515_enable_irq(dev, MCP2515_CANINTE_TX0IE << mailbox);
-    //mcp2515_spi_bitmod(dev, TX_CTRL(mailbox), MCP2515_TXBCTRL_TXREQ, MCP2515_TXBCTRL_TXREQ);
     mcp2515_spi_rts(dev, mailbox);
 
     return mailbox;

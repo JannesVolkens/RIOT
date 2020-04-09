@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 #ifndef MCP2515_PARAM_CS
-#define MCP2515_PARAM_CS SPI_HWCS(0)
+#define MCP2515_PARAM_CS GPIO_PIN(0, 2)
 #endif
 
 #ifndef MCP2515_PARAM_RST
@@ -58,7 +58,8 @@ extern "C" {
 #endif
 
 #ifndef MCP2515_PARAM_CLK
-#define MCP2515_PARAM_CLK (8000000ul)
+#define MCP2515_PARAM_CLK (8000000ul)       /**< External clock frequency */
+
 #endif
 
 #define MCP2515_DEFAULT_CONFIG \
