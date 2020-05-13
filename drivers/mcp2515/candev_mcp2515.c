@@ -33,7 +33,9 @@
 #include "sched.h"
 #include "xtimer.h"
 
-#define ENABLE_DEBUG (0)
+#include "mcp2515_spi.h"
+
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 #ifndef CANDEV_MCP2515_DEFAULT_BITRATE
@@ -125,7 +127,7 @@ static int _init(candev_t *candev)
     memset(dev->tx_mailbox, 0, sizeof(dev->tx_mailbox));
 
     mcp2515_init(dev, _mcp2515_irq_handler);
-    mcp2515_reset(dev);
+    mcp2515_spi_reset(dev);
     mcp2515_set_mode(dev, MODE_CONFIG);
     mcp2515_configure_bittiming(dev);
     mcp2515_init_irqs(dev);
