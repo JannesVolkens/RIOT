@@ -99,6 +99,13 @@ int mcp2515_init(candev_mcp2515_t *dev, void(*irq_handler_cb)(void*))
     if (res < 0){
         return -1;
     }
+
+    uint8_t cmd = MCP2515_RXB0CTRL_MODE_RECV_ALL;
+    res = mcp2515_spi_write(dev, MCP2515_RXB0CTRL , &cmd, 1);
+    if (res < 0) {
+        DEBUG("failed to set acceptance mode\n");
+        return -1;
+    }
     return 0;
 }
 
