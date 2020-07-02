@@ -128,7 +128,7 @@ static void fill_standard_id(uint32_t id, uint8_t *bytebuf)
 static void fill_extended_id(uint32_t id, uint8_t *bytebuf)
 {
     bytebuf[0] = (uint8_t) ((id & 0x1FE00000UL) >> 21); /* T/RXBnSIDH */
-    bytebuf[1] = (uint8_t) ((id & 0x001C0000UL) >> 12)
+    bytebuf[1] = (uint8_t) ((id & 0x001C0000UL) >> 13)
         | (uint8_t) ((id & 0x00030000UL) >> 16) | 0x08; /* T/RXBnSIDL */
     bytebuf[2] = (uint8_t) ((id & 0x0000FF00UL) >> 8);  /* T/RXBnEID8 */
     bytebuf[3] = (uint8_t) (id & 0x000000FFUL);         /* T/RXBnEID0 */
