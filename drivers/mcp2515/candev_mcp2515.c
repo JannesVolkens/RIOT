@@ -165,7 +165,7 @@ static int _send(candev_t *candev, const struct can_frame *frame)
         mode = mcp2515_get_mode(dev);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("failed to lock mutex_send");
+        DEBUG("failed to lock mutex_send\n");
         return -1;
     }
     if (mode != MODE_NORMAL && mode != MODE_LOOPBACK) {
@@ -190,7 +190,7 @@ static int _send(candev_t *candev, const struct can_frame *frame)
         ret = mcp2515_send(dev, frame, box);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("send2_failed to lock mutex");
+        DEBUG("send2_failed to lock mutex\n");
         return -1;
     }
     if(ret < 0) {
@@ -198,7 +198,7 @@ static int _send(candev_t *candev, const struct can_frame *frame)
     }
 
     if(neednewisr){
-        DEBUG("Calling _isr() again on request");
+        DEBUG("Calling _isr() again on request\n");
         _isr(candev);
         neednewisr = 0;
     }
@@ -227,7 +227,7 @@ static int _abort(candev_t *candev, const struct can_frame *frame)
         mcp2515_abort(dev, box);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("abort_Failed to lock mutex");
+        DEBUG("abort_Failed to lock mutex\n");
         return -1;
     }
     dev->tx_mailbox[box] = NULL;
@@ -244,7 +244,7 @@ static void _isr(candev_t *candev)
         flag = mcp2515_get_irq(dev);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("isr: Failed to lock mutex");
+        DEBUG("isr: Failed to lock mutex\n");
         neednewisr = 1;
         return;
     }
@@ -284,7 +284,7 @@ static void _isr(candev_t *candev)
             flag = mcp2515_get_irq(dev);
             mutex_unlock(&mcp_mutex);
         } else {
-            DEBUG("isr2: Failed to lock mutex");
+            DEBUG("isr2: Failed to lock mutex\n");
             neednewisr = 1;
             return;
         }
@@ -294,7 +294,7 @@ static void _isr(candev_t *candev)
             mcp2515_clear_irq(dev, flag & ~INT_RX0 & ~INT_RX1);
             mutex_unlock(&mcp_mutex);
         } else {
-            DEBUG("isr3: failed to lock mutex");
+            DEBUG("isr3: failed to lock mutex\n");
             neednewisr = 1;
             return;
         }
@@ -332,7 +332,7 @@ static int _set(candev_t *candev, canopt_t opt, void *value, size_t value_len)
                             res = mcp2515_set_mode(dev, MODE_LISTEN_ONLY);
                             mutex_unlock(&mcp_mutex);
                         } else {
-                            DEBUG("set1_Failed to lock mutex");
+                            DEBUG("set1_Failed to lock mutex\n");
                             return -1;
                         }
                         break;
@@ -342,7 +342,7 @@ static int _set(candev_t *candev, canopt_t opt, void *value, size_t value_len)
                             res = mcp2515_set_mode(dev, MODE_SLEEP);
                             mutex_unlock(&mcp_mutex);
                         } else {
-                            DEBUG("set2_Failed to lock mutex");
+                            DEBUG("set2_Failed to lock mutex\n");
                             return -1;
                         }
                         break;
@@ -351,7 +351,7 @@ static int _set(candev_t *candev, canopt_t opt, void *value, size_t value_len)
                             res = mcp2515_set_mode(dev, MODE_NORMAL);
                             mutex_unlock(&mcp_mutex);
                         } else {
-                            DEBUG("set3_Failed to lock mutex");
+                            DEBUG("set3_Failed to lock mutex\n");
                             return -1;
                         }
                         break;
@@ -438,7 +438,7 @@ static int _set_filter(candev_t *dev, const struct can_filter *filter)
 
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("setfilt_Failed to lock mutex");
+        DEBUG("setfilt_Failed to lock mutex\n");
         return -1;
     }
 
@@ -535,7 +535,7 @@ static int _remove_filter(candev_t *dev, const struct can_filter *filter)
         res = mcp2515_set_mode(dev_mcp, MODE_CONFIG);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("remfilt_Failed to lock mutex");
+        DEBUG("remfilt_Failed to lock mutex\n");
         return -1;
     }
 
@@ -571,7 +571,7 @@ static int _remove_filter(candev_t *dev, const struct can_filter *filter)
                                    CAN_EFF_MASK);
                     mutex_unlock(&mcp_mutex);
                 } else {
-                    DEBUG("remfilt2_Failed to lock mutex");
+                    DEBUG("remfilt2_Failed to lock mutex\n");
                     return -1;
                 }
                 /* save modification */
@@ -602,7 +602,7 @@ static int _remove_filter(candev_t *dev, const struct can_filter *filter)
         mcp2515_set_mode(dev_mcp, mode);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("remfilt3_Failed to lock mutex");
+        DEBUG("remfilt3_Failed to lock mutex\n");
         return -1;
     }
 
@@ -617,7 +617,7 @@ static void _irq_rx(candev_mcp2515_t *dev, int box)
         mcp2515_receive(dev, &dev->rx_buf[box], box);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("irqrx_Failed to lock mutex");
+        DEBUG("irqrx_Failed to lock mutex\n");
         return;
     }
 
@@ -643,7 +643,7 @@ static void _irq_error(candev_mcp2515_t *dev)
         err = mcp2515_get_errors(dev);
         mutex_unlock(&mcp_mutex);
     } else {
-        DEBUG("erqerr_Failed to lock mutex");
+        DEBUG("erqerr_Failed to lock mutex\n");
         return;
     }
 
@@ -679,7 +679,7 @@ static void _irq_message_error(candev_mcp2515_t *dev)
                 mcp2515_abort(dev, box);
                 mutex_unlock(&mcp_mutex);
             } else {
-                DEBUG("irqmsg_Failed to lock mutex");
+                DEBUG("irqmsg_Failed to lock mutex\n");
                 return;
             }
             _send_event(dev, CANDEV_EVENT_TIMEOUT_TX_CONF,
