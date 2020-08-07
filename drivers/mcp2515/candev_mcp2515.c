@@ -33,7 +33,7 @@
 #include "sched.h"
 #include "xtimer.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 #ifndef CANDEV_MCP2515_DEFAULT_BITRATE

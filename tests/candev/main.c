@@ -19,7 +19,7 @@
  * @}
  */
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 
 #include <debug.h>
 #include <errno.h>
@@ -64,24 +64,26 @@ static int _send(int argc, char **argv)
 {
     int ret = 0;
 
+    (void)argc;
+
     struct can_frame frame = {
-        .can_id = 1,
+        .can_id = strtoul(argv[1], NULL, 16),
         .can_dlc = 3,
         .data[0] = 0xAB,
         .data[1] = 0xCD,
         .data[2] = 0xEF,
     };
 
-    if (argc > 1) {
-        if (argc > 1 + CAN_MAX_DLEN) {
-            printf("Could not send. Maximum CAN-bytes: %d\n", CAN_MAX_DLEN);
-            return -1;
-        }
-        for (int i = 1; i < argc; i++) {
-            frame.data[i - 1] = atoi(argv[i]);
-        }
-        frame.can_dlc = argc - 1;
-    }
+    // if (argc > 1) {
+    //     if (argc > 1 + CAN_MAX_DLEN) {
+    //         printf("Could not send. Maximum CAN-bytes: %d\n", CAN_MAX_DLEN);
+    //         return -1;
+    //     }
+    //     for (int i = 1; i < argc; i++) {
+    //         frame.data[i - 1] = atoi(argv[i]);
+    //     }
+    //     frame.can_dlc = argc - 1;
+    // }
 
     ret = candev->driver->send(candev, &frame);
     if (ret < 0) {

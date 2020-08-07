@@ -65,7 +65,7 @@ static void *idle_thread(void *arg)
 }
 
 static char main_stack[THREAD_STACKSIZE_MAIN];
-static char idle_stack[THREAD_STACKSIZE_IDLE];
+static char idle_stack[1024];
 
 void kernel_init(void)
 {
